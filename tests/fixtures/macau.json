@@ -1,0 +1,408 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic SDK contract, NOT a real bookmaker API response",
+  "matches": [
+    {
+      "external_id": "mock-macau-001",
+      "home_name": "Arsenal",
+      "away_name": "Bayern Munich",
+      "home_external_id": "mock-macau-ars",
+      "away_external_id": "mock-macau-bay",
+      "competition": "ucl",
+      "competition_external_id": "mock-macau-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-macau-002",
+      "home_name": "Real Madrid",
+      "away_name": "Inter",
+      "home_external_id": "mock-macau-rma",
+      "away_external_id": "mock-macau-int",
+      "competition": "ucl",
+      "competition_external_id": "mock-macau-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-macau-003",
+      "home_name": "Leeds United",
+      "away_name": "Sunderland",
+      "home_external_id": "mock-macau-lee",
+      "away_external_id": "mock-macau-sun",
+      "competition": "eng",
+      "competition_external_id": "mock-macau-eng",
+      "kickoff_at": "2026-09-30T19:45:00Z"
+    },
+    {
+      "external_id": "mock-macau-004",
+      "home_name": "Unlisted Club A",
+      "away_name": "Unlisted Club B",
+      "home_external_id": "mock-macau-new-a",
+      "away_external_id": "mock-macau-new-b",
+      "competition": "other",
+      "competition_external_id": "mock-macau-other",
+      "kickoff_at": "2026-09-30T20:00:00Z"
+    }
+  ],
+  "odds": [
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.18",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.71",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.31",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.97",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.03",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.91",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.09",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.56",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.86",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-001",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.26",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.20",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.73",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.33",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.99",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.05",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.93",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.11",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.58",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.88",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-002",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.28",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.22",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.75",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.35",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.01",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.07",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.95",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.13",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.60",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.90",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-003",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.30",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.24",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.77",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.37",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.03",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.09",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.97",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.15",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.62",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.92",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-macau-004",
+      "bookmaker": "Macau",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.32",
+      "effective_at": "2026-09-30T00:00:00Z"
+    }
+  ]
+}

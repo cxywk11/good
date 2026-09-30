@@ -1,0 +1,182 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic values, official page JS field structure. Not a captured live response.",
+  "errorCode": "0",
+  "value": {
+    "matchInfoList": [
+      {
+        "businessDate": "2026-09-30",
+        "subMatchList": [
+          {
+            "matchId": "mock-s001",
+            "matchNumStr": "周三001",
+            "matchDate": "2026-10-01",
+            "matchTime": "03:00:00",
+            "businessDate": "2026-09-30",
+            "leagueId": "mock-ucl",
+            "leagueAllName": "欧冠",
+            "homeTeamId": "mock-ars",
+            "homeTeamAllName": "阿森纳",
+            "awayTeamId": "mock-bay",
+            "awayTeamAllName": "拜仁慕尼黑",
+            "sellStatus": "1",
+            "poolList": [
+              {
+                "poolCode": "HAD",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              },
+              {
+                "poolCode": "HHAD",
+                "single": "0",
+                "cbtValue": "1",
+                "cbtSingle": "0"
+              },
+              {
+                "poolCode": "CRS",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              },
+              {
+                "poolCode": "TTG",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              },
+              {
+                "poolCode": "HAFU",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              }
+            ],
+            "had": {
+              "h": "2.10",
+              "d": "3.45",
+              "a": "2.90"
+            },
+            "hhad": {
+              "goalLine": "-1",
+              "h": "3.70",
+              "d": "3.80",
+              "a": "1.68"
+            },
+            "crs": {
+              "s01s00": "8.50",
+              "s01s01": "6.50",
+              "s00s01": "9.00",
+              "s1sh": "22.00",
+              "s1sd": "80.00",
+              "s1sa": "20.00"
+            },
+            "ttg": {
+              "s0": "12.00",
+              "s1": "4.50",
+              "s2": "3.45",
+              "s3": "3.60",
+              "s4": "6.00",
+              "s5": "10.00",
+              "s6": "20.00",
+              "s7": "35.00"
+            },
+            "hafu": {
+              "hh": "3.20",
+              "hd": "15.00",
+              "ha": "28.00",
+              "dh": "5.10",
+              "dd": "5.50",
+              "da": "6.80",
+              "ah": "25.00",
+              "ad": "14.00",
+              "aa": "4.40"
+            }
+          },
+          {
+            "matchId": "mock-s002",
+            "matchNumStr": "周三002",
+            "matchDate": "2026-10-01",
+            "matchTime": "03:00:00",
+            "businessDate": "2026-09-30",
+            "leagueId": "mock-ucl",
+            "leagueAllName": "欧冠",
+            "homeTeamId": "mock-rma",
+            "homeTeamAllName": "皇家马德里",
+            "awayTeamId": "mock-int",
+            "awayTeamAllName": "国际米兰",
+            "sellStatus": "1",
+            "poolList": [
+              {
+                "poolCode": "HAD",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              },
+              {
+                "poolCode": "HHAD",
+                "single": "0",
+                "cbtValue": "1",
+                "cbtSingle": "0"
+              },
+              {
+                "poolCode": "TTG",
+                "single": "1",
+                "cbtValue": "1",
+                "cbtSingle": "1"
+              }
+            ],
+            "had": {
+              "h": "1.85",
+              "d": "3.60",
+              "a": "3.55"
+            },
+            "hhad": {
+              "goalLine": "-1",
+              "h": "3.10",
+              "d": "3.65",
+              "a": "1.88"
+            },
+            "ttg": {
+              "s0": "14.00",
+              "s1": "5.00",
+              "s2": "3.70",
+              "s3": "3.45",
+              "s4": "5.40",
+              "s5": "9.00",
+              "s6": "17.00",
+              "s7": "32.00"
+            }
+          },
+          {
+            "matchId": "mock-s003",
+            "matchNumStr": "周三003",
+            "matchDate": "2026-10-01",
+            "matchTime": "02:45:00",
+            "businessDate": "2026-09-30",
+            "leagueId": "mock-eng",
+            "leagueAllName": "英冠",
+            "homeTeamId": "mock-lee",
+            "homeTeamAllName": "利兹联",
+            "awayTeamId": "mock-sun",
+            "awayTeamAllName": "桑德兰",
+            "sellStatus": "1",
+            "poolList": [
+              {
+                "poolCode": "HAD",
+                "single": "0",
+                "cbtValue": "1",
+                "cbtSingle": "0"
+              }
+            ],
+            "had": {
+              "h": "1.75",
+              "d": "3.50",
+              "a": "4.20"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

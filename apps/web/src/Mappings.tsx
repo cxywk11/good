@@ -1,0 +1,22 @@
+import { useState } from 'react';
+import { Alert, Button, Checkbox, Form, Input, Modal, Select, Table, Tag } from 'antd';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api, Match, time } from './api';
+import { PageTitle, QueryError } from './ui';
+type Mapping={id:string;provider:string;match_id:string|null;status:string;confidence:string;version:number;match_method:string;provider_match:{home_name:string;away_name:string;kickoff_at:string;provider_match_id:string;mock:boolean};sporttery_match:Match|null;candidates:{match_id:string;score:number}[]};
+export default function Mappings(){
+ const [status,setStatus]=useState<string>(),[page,setPage]=useState(1),[search,setSearch]=useState('');
+ const [review,setReview]=useState<{row:Mapping;action:string}|null>(null),[error,setError]=useState(''),[saving,setSaving]=useState(false);
+ const [form]=Form.useForm();const cache=useQueryClient();
+ const query=useQuery({queryKey:['mappings',status,page],queryFn:()=>api<{items:Mapping[];total:number}>(`/admin/mappings?page=${page}${status?'&status='+status:''}`),retry:false});
+ const choices=useQuery({queryKey:['mapping-choices',search],queryFn:()=>api<Match[]>('/admin/matches/search?q='+encodeURIComponent(search)),enabled:!!review});
+ function start(row:Mapping,action:string){setError('');form.resetFields();form.setFieldsValue({match_id:row.match_id,bind_team_ids:false});setReview({row,action})}
+ async function save(){if(!review)return;const values=await form.validateFields();setSaving(true);setError('');try{await api(`/admin/mappings/${review.row.id}/${review.action}`,{method:'POST',body:JSON.stringify({...values,version:review.row.version})});setReview(null);await cache.invalidateQueries({queryKey:['mappings']});await cache.invalidateQueries({queryKey:['matches']})}catch(e){setError((e as Error).message)}finally{setSaving(false)}}
+ return <><PageTitle eyebrow="ENTITY RESOLUTION" title="比赛映射审核" description="核对主客身份与开球时间，让每一次关联都有依据。"/><Alert type="info" showIcon message="只有已确认映射可以写入海外赔率。审核和重新绑定不会改写已有赔率。"/><QueryError error={query.error}/><div className="panel"><div className="panel-toolbar"><strong>映射记录</strong><Select style={{width:170}} allowClear placeholder="全部状态" value={status} onChange={v=>{setStatus(v);setPage(1)}} options={['MATCHED','REVIEW','UNMATCHED','REJECTED'].map(s=>({label:s,value:s}))}/></div><Table<Mapping> rowKey="id" dataSource={query.data?.items} loading={query.isLoading} scroll={{x:1050}} pagination={{current:page,pageSize:30,total:query.data?.total,onChange:setPage,showSizeChanger:false}} columns={[
+  {title:'体彩比赛',render:(_,r)=>r.sporttery_match?<><strong>{r.sporttery_match.match_num} · {r.sporttery_match.home_team_name} vs {r.sporttery_match.away_team_name}</strong><small className="table-sub">{time(r.sporttery_match.kickoff_at,true)}</small></>:<span className="muted">尚未确定候选</span>},
+  {title:'供应商比赛',render:(_,r)=><><strong>{r.provider_match.home_name} vs {r.provider_match.away_name}</strong><small className="table-sub">{r.provider} · {time(r.provider_match.kickoff_at,true)} {r.provider_match.mock?'· Mock':''}</small></>},
+  {title:'评分',dataIndex:'confidence',render:v=><strong>{Number(v)}%</strong>},
+  {title:'状态',dataIndex:'status',render:v=><Tag color={v.includes('CONFIRMED')?'green':v==='REVIEW'?'gold':'default'}>{v}</Tag>},
+  {title:'审核',render:(_,r)=><div className="actions"><Button size="small" onClick={()=>start(r,'confirm')}>确认</Button><Button size="small" onClick={()=>start(r,'rebind')}>重新绑定</Button><Button size="small" danger onClick={()=>start(r,'reject')}>拒绝</Button></div>}
+ ]}/></div><Modal title={review?.action==='reject'?'拒绝映射':'确认比赛关联'} open={!!review} onCancel={()=>setReview(null)} onOk={()=>void save()} confirmLoading={saving} destroyOnHidden>{error&&<Alert type="error" message={error}/>}<Form form={form} layout="vertical">{review?.action!=='reject'&&<><Form.Item name="match_id" label="体彩比赛" rules={[{required:true}]}><Select showSearch filterOption={false} onSearch={setSearch} placeholder="输入球队或编号查询" options={choices.data?.map(m=>({value:m.id,label:`${m.match_num} ${m.home_team_name} vs ${m.away_team_name} · ${time(m.kickoff_at,true)}`}))}/></Form.Item><Form.Item name="bind_team_ids" valuePropName="checked"><Checkbox>同时确认该供应商的主客队 ID 与统一球队 ID 对应关系</Checkbox></Form.Item></>}<Form.Item name="reason" label="审核理由" rules={[{required:true,min:3}]}><Input.TextArea rows={3} placeholder="记录所依据的身份与时间证据"/></Form.Item></Form></Modal></>;
+}

@@ -1,0 +1,167 @@
+{
+  "mock": true,
+  "teams": [
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-ars",
+      "sporttery_external_id": "mock-ars"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-bay",
+      "sporttery_external_id": "mock-bay"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-rma",
+      "sporttery_external_id": "mock-rma"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-int",
+      "sporttery_external_id": "mock-int"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-lee",
+      "sporttery_external_id": "mock-lee"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-sun",
+      "sporttery_external_id": "mock-sun"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-ars",
+      "sporttery_external_id": "mock-ars"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-bay",
+      "sporttery_external_id": "mock-bay"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-rma",
+      "sporttery_external_id": "mock-rma"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-int",
+      "sporttery_external_id": "mock-int"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-lee",
+      "sporttery_external_id": "mock-lee"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-sun",
+      "sporttery_external_id": "mock-sun"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-ars",
+      "sporttery_external_id": "mock-ars"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-bay",
+      "sporttery_external_id": "mock-bay"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-rma",
+      "sporttery_external_id": "mock-rma"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-int",
+      "sporttery_external_id": "mock-int"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-lee",
+      "sporttery_external_id": "mock-lee"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-sun",
+      "sporttery_external_id": "mock-sun"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-ars",
+      "sporttery_external_id": "mock-ars"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-bay",
+      "sporttery_external_id": "mock-bay"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-rma",
+      "sporttery_external_id": "mock-rma"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-int",
+      "sporttery_external_id": "mock-int"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-lee",
+      "sporttery_external_id": "mock-lee"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-sun",
+      "sporttery_external_id": "mock-sun"
+    }
+  ],
+  "competitions": [
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-ucl",
+      "sporttery_external_id": "mock-ucl"
+    },
+    {
+      "provider": "pinnacle",
+      "external_id": "mock-pinnacle-eng",
+      "sporttery_external_id": "mock-eng"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-ucl",
+      "sporttery_external_id": "mock-ucl"
+    },
+    {
+      "provider": "bet365",
+      "external_id": "mock-bet365-eng",
+      "sporttery_external_id": "mock-eng"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-ucl",
+      "sporttery_external_id": "mock-ucl"
+    },
+    {
+      "provider": "macau",
+      "external_id": "mock-macau-eng",
+      "sporttery_external_id": "mock-eng"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-ucl",
+      "sporttery_external_id": "mock-ucl"
+    },
+    {
+      "provider": "williamhill",
+      "external_id": "mock-williamhill-eng",
+      "sporttery_external_id": "mock-eng"
+    }
+  ]
+}

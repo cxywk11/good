@@ -1,0 +1,408 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic SDK contract, NOT a real bookmaker API response",
+  "matches": [
+    {
+      "external_id": "mock-pinnacle-001",
+      "home_name": "Arsenal",
+      "away_name": "Bayern Munich",
+      "home_external_id": "mock-pinnacle-ars",
+      "away_external_id": "mock-pinnacle-bay",
+      "competition": "ucl",
+      "competition_external_id": "mock-pinnacle-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-pinnacle-002",
+      "home_name": "Real Madrid",
+      "away_name": "Inter",
+      "home_external_id": "mock-pinnacle-rma",
+      "away_external_id": "mock-pinnacle-int",
+      "competition": "ucl",
+      "competition_external_id": "mock-pinnacle-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-pinnacle-003",
+      "home_name": "Leeds United",
+      "away_name": "Sunderland",
+      "home_external_id": "mock-pinnacle-lee",
+      "away_external_id": "mock-pinnacle-sun",
+      "competition": "eng",
+      "competition_external_id": "mock-pinnacle-eng",
+      "kickoff_at": "2026-09-30T19:45:00Z"
+    },
+    {
+      "external_id": "mock-pinnacle-004",
+      "home_name": "Unlisted Club A",
+      "away_name": "Unlisted Club B",
+      "home_external_id": "mock-pinnacle-new-a",
+      "away_external_id": "mock-pinnacle-new-b",
+      "competition": "other",
+      "competition_external_id": "mock-pinnacle-other",
+      "kickoff_at": "2026-09-30T20:00:00Z"
+    }
+  ],
+  "odds": [
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.12",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.65",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.25",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.91",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "1.97",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.85",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.03",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.50",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.80",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-001",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.20",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.14",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.67",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.27",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.93",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "1.99",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.87",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.05",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.52",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.82",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-002",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.22",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.16",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.69",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.29",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.95",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.01",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.89",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.07",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.54",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.84",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-003",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.24",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.18",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.71",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.31",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.97",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.03",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.91",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.09",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.56",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.86",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-pinnacle-004",
+      "bookmaker": "Pinnacle",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.26",
+      "effective_at": "2026-09-30T00:00:00Z"
+    }
+  ]
+}

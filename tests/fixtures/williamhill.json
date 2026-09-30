@@ -1,0 +1,408 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic SDK contract, NOT a real bookmaker API response",
+  "matches": [
+    {
+      "external_id": "mock-williamhill-001",
+      "home_name": "Arsenal",
+      "away_name": "Bayern Munich",
+      "home_external_id": "mock-williamhill-ars",
+      "away_external_id": "mock-williamhill-bay",
+      "competition": "ucl",
+      "competition_external_id": "mock-williamhill-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-williamhill-002",
+      "home_name": "Real Madrid",
+      "away_name": "Inter",
+      "home_external_id": "mock-williamhill-rma",
+      "away_external_id": "mock-williamhill-int",
+      "competition": "ucl",
+      "competition_external_id": "mock-williamhill-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-williamhill-003",
+      "home_name": "Leeds United",
+      "away_name": "Sunderland",
+      "home_external_id": "mock-williamhill-lee",
+      "away_external_id": "mock-williamhill-sun",
+      "competition": "eng",
+      "competition_external_id": "mock-williamhill-eng",
+      "kickoff_at": "2026-09-30T19:45:00Z"
+    },
+    {
+      "external_id": "mock-williamhill-004",
+      "home_name": "Unlisted Club A",
+      "away_name": "Unlisted Club B",
+      "home_external_id": "mock-williamhill-new-a",
+      "away_external_id": "mock-williamhill-new-b",
+      "competition": "other",
+      "competition_external_id": "mock-williamhill-other",
+      "kickoff_at": "2026-09-30T20:00:00Z"
+    }
+  ],
+  "odds": [
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.21",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.74",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.34",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.00",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.06",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.94",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.12",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.59",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.89",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-001",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.29",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.23",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.76",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.36",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.02",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.08",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.96",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.14",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.61",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.91",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-002",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.31",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.25",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.78",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.38",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.04",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.10",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.98",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.16",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.63",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.93",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-003",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.33",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.27",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.80",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.40",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.06",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.12",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "2.00",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.18",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.65",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.95",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-williamhill-004",
+      "bookmaker": "WilliamHill",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.35",
+      "effective_at": "2026-09-30T00:00:00Z"
+    }
+  ]
+}

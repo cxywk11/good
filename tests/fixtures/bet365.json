@@ -1,0 +1,408 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic SDK contract, NOT a real bookmaker API response",
+  "matches": [
+    {
+      "external_id": "mock-bet365-001",
+      "home_name": "Arsenal",
+      "away_name": "Bayern Munich",
+      "home_external_id": "mock-bet365-ars",
+      "away_external_id": "mock-bet365-bay",
+      "competition": "ucl",
+      "competition_external_id": "mock-bet365-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-bet365-002",
+      "home_name": "Real Madrid",
+      "away_name": "Inter",
+      "home_external_id": "mock-bet365-rma",
+      "away_external_id": "mock-bet365-int",
+      "competition": "ucl",
+      "competition_external_id": "mock-bet365-ucl",
+      "kickoff_at": "2026-09-30T19:00:00Z"
+    },
+    {
+      "external_id": "mock-bet365-003",
+      "home_name": "Leeds United",
+      "away_name": "Sunderland",
+      "home_external_id": "mock-bet365-lee",
+      "away_external_id": "mock-bet365-sun",
+      "competition": "eng",
+      "competition_external_id": "mock-bet365-eng",
+      "kickoff_at": "2026-09-30T19:45:00Z"
+    },
+    {
+      "external_id": "mock-bet365-004",
+      "home_name": "Unlisted Club A",
+      "away_name": "Unlisted Club B",
+      "home_external_id": "mock-bet365-new-a",
+      "away_external_id": "mock-bet365-new-b",
+      "competition": "other",
+      "competition_external_id": "mock-bet365-other",
+      "kickoff_at": "2026-09-30T20:00:00Z"
+    }
+  ],
+  "odds": [
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.15",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.68",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.28",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.94",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.00",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.88",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.06",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.53",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.83",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-001",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.23",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.17",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.70",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.30",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.96",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.02",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.90",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.08",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.55",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.85",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-002",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.25",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.19",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.72",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.32",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "1.98",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.04",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.92",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.10",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.57",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.87",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-003",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.27",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "HOME",
+      "line": null,
+      "decimal_odds": "2.21",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "DRAW",
+      "line": null,
+      "decimal_odds": "3.74",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "1X2",
+      "selection": "AWAY",
+      "line": null,
+      "decimal_odds": "3.34",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "HOME",
+      "line": "-0.75",
+      "decimal_odds": "2.00",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "ASIAN_HANDICAP",
+      "selection": "AWAY",
+      "line": "0.75",
+      "decimal_odds": "2.06",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "OVER",
+      "line": "2.5",
+      "decimal_odds": "1.94",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "TOTALS",
+      "selection": "UNDER",
+      "line": "2.5",
+      "decimal_odds": "2.12",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:0",
+      "line": null,
+      "decimal_odds": "8.59",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "1:1",
+      "line": null,
+      "decimal_odds": "6.89",
+      "effective_at": "2026-09-30T00:00:00Z"
+    },
+    {
+      "external_match_id": "mock-bet365-004",
+      "bookmaker": "Bet365",
+      "market_type": "CORRECT_SCORE",
+      "selection": "0:1",
+      "line": null,
+      "decimal_odds": "9.29",
+      "effective_at": "2026-09-30T00:00:00Z"
+    }
+  ]
+}

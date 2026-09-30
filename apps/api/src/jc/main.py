@@ -153,7 +153,7 @@ def system_info(request: Request):
         {
             "name": "竞彩智研",
             "version": "0.1.0",
-            "phase": "0–3",
+            "phase": "4 (P4-0–P4-2)",
             "demo_mode": settings.demo_mode,
             "timezone": "UTC",
             "display_timezone": "Asia/Shanghai",

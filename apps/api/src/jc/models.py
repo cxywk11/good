@@ -308,3 +308,82 @@ class AuthRateBucket(Base):
     attempts: Mapped[int]
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     __table_args__ = (CheckConstraint("attempts > 0", name="positive_auth_attempts"),)
+
+
+class AnalysisVisibility(Base):
+    """Conservative proof: a separate connection has seen this committed immutable row."""
+
+    __tablename__ = "analysis_visibility"
+    entity_type: Mapped[str] = mapped_column(String(60), primary_key=True)
+    entity_id: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True)
+    visible_at: Mapped[datetime] = mapped_column(UTCDateTime())
+
+
+class PostMatchEvidence(Identity):
+    dedup_key: Mapped[str] = mapped_column(String(64), unique=True)
+    match_id: Mapped[str] = mapped_column(ForeignKey("matches.id"))
+    match_version_id: Mapped[str] = mapped_column(ForeignKey("match_versions.id"))
+    source: Mapped[str] = mapped_column(String(60))
+    raw_payload_id: Mapped[str] = mapped_column(ForeignKey("provider_raw_payloads.id"))
+    mapping_id: Mapped[str | None] = mapped_column(ForeignKey("match_mapping.id"))
+    mapping_version: Mapped[int | None]
+    finished_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    observed_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    published_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    effective_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    mock: Mapped[bool] = mapped_column(default=False)
+
+
+class MatchResult(PostMatchEvidence, Base):
+    __tablename__ = "match_results"
+    home_score: Mapped[int]
+    away_score: Mapped[int]
+    half_home_score: Mapped[int | None]
+    half_away_score: Mapped[int | None]
+    first_goal_team: Mapped[str | None] = mapped_column(String(10))
+    first_goal_minute: Mapped[int | None]
+    __table_args__ = (
+        CheckConstraint("home_score >= 0 AND away_score >= 0", name="valid_full_score"),
+        CheckConstraint("half_home_score >= 0 AND half_home_score <= home_score", name="valid_half_home"),
+        CheckConstraint("half_away_score >= 0 AND half_away_score <= away_score", name="valid_half_away"),
+        CheckConstraint("first_goal_team IN ('HOME', 'AWAY', 'NONE')", name="valid_first_goal_team"),
+        CheckConstraint("first_goal_minute >= 0", name="valid_first_goal_minute"),
+        CheckConstraint("finished_at <= observed_at", name="result_finished_before_observed"),
+        Index("ix_results_cutoff", "match_id", "observed_at", "created_at"),
+    )
+
+
+class TeamMatchStats(PostMatchEvidence, Base):
+    __tablename__ = "team_match_stats"
+    team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"))
+    xg: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    xga: Mapped[Decimal | None] = mapped_column(Numeric(10, 4))
+    shots: Mapped[int | None]
+    shots_on_target: Mapped[int | None]
+    possession: Mapped[Decimal | None] = mapped_column(Numeric(7, 4))
+    corners: Mapped[int | None]
+    red_cards: Mapped[int | None]
+    __table_args__ = (
+        CheckConstraint("xg >= 0 AND xga >= 0", name="valid_xg"),
+        CheckConstraint("shots >= 0 AND shots_on_target >= 0", name="valid_shots"),
+        CheckConstraint("shots_on_target <= shots", name="valid_shots_on_target"),
+        CheckConstraint("possession >= 0 AND possession <= 100", name="valid_possession"),
+        CheckConstraint("corners >= 0 AND red_cards >= 0", name="valid_corners_cards"),
+        CheckConstraint("finished_at <= observed_at", name="stats_finished_before_observed"),
+        Index("ix_stats_cutoff", "team_id", "observed_at", "created_at"),
+    )
+
+
+class FeatureSnapshot(Identity, Base):
+    __tablename__ = "feature_snapshots"
+    match_id: Mapped[str] = mapped_column(ForeignKey("matches.id"))
+    analysis_cutoff: Mapped[datetime] = mapped_column(UTCDateTime())
+    feature_version: Mapped[str] = mapped_column(String(60))
+    feature_data: Mapped[dict] = mapped_column(Json)
+    data_quality_score: Mapped[int]
+    mock: Mapped[bool] = mapped_column(default=False)
+    __table_args__ = (
+        UniqueConstraint("match_id", "analysis_cutoff", "feature_version", name="uq_feature_input"),
+        CheckConstraint("data_quality_score BETWEEN 0 AND 100", name="valid_feature_quality"),
+        CheckConstraint("analysis_cutoff <= created_at", name="feature_not_future"),
+    )

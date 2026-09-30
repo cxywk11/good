@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -102,7 +102,72 @@ class OddsQuote(BaseModel):
         return value
 
 
+class PostMatchContract(BaseModel):
+    """Final regulation-time facts only; provider must supply a known finish time."""
+
+    external_match_id: str = Field(min_length=1)
+    status: Literal["FINAL"]
+    period: Literal["REGULATION"]
+    finished_at: datetime
+    published_at: datetime | None = None
+    effective_at: datetime | None = None
+
+    @field_validator("finished_at", "published_at", "effective_at")
+    @classmethod
+    def zoned_time(cls, value):
+        if value is not None:
+            from jc.time import as_utc
+
+            return as_utc(value)
+        return value
+
+
+class NormalizedResult(PostMatchContract):
+    home_score: int = Field(ge=0, strict=True)
+    away_score: int = Field(ge=0, strict=True)
+    half_home_score: int | None = Field(None, ge=0, strict=True)
+    half_away_score: int | None = Field(None, ge=0, strict=True)
+    first_goal_team: Literal["HOME", "AWAY", "NONE"] | None = None
+    first_goal_minute: int | None = Field(None, ge=0, strict=True)
+
+    @model_validator(mode="after")
+    def consistent_score(self):
+        if self.half_home_score is not None and self.half_home_score > self.home_score:
+            raise ValueError("Half-time home score exceeds final score")
+        if self.half_away_score is not None and self.half_away_score > self.away_score:
+            raise ValueError("Half-time away score exceeds final score")
+        if self.first_goal_team == "NONE" and (
+            self.home_score + self.away_score or self.first_goal_minute is not None
+        ):
+            raise ValueError("No-goal evidence contradicts score/minute")
+        if self.first_goal_team in {"HOME", "AWAY"}:
+            if (self.home_score if self.first_goal_team == "HOME" else self.away_score) == 0:
+                raise ValueError("First scorer has no goals")
+        if self.first_goal_minute is not None and self.first_goal_team not in {"HOME", "AWAY"}:
+            raise ValueError("First goal minute requires scorer evidence")
+        return self
+
+
+class NormalizedTeamStats(PostMatchContract):
+    external_team_id: str = Field(min_length=1)
+    xg: Decimal | None = Field(None, ge=0, allow_inf_nan=False, max_digits=10, decimal_places=4)
+    xga: Decimal | None = Field(None, ge=0, allow_inf_nan=False, max_digits=10, decimal_places=4)
+    shots: int | None = Field(None, ge=0, strict=True)
+    shots_on_target: int | None = Field(None, ge=0, strict=True)
+    possession: Decimal | None = Field(None, ge=0, le=100, allow_inf_nan=False, decimal_places=4)
+    corners: int | None = Field(None, ge=0, strict=True)
+    red_cards: int | None = Field(None, ge=0, strict=True)
+
+    @model_validator(mode="after")
+    def consistent_shots(self):
+        if self.shots is not None and self.shots_on_target is not None and self.shots_on_target > self.shots:
+            raise ValueError("Shots on target exceed shots")
+        return self
+
+
 @dataclass
 class NormalizedBatch:
     matches: list[NormalizedMatch] = field(default_factory=list)
     odds: list[OddsQuote] = field(default_factory=list)
+    results: list[NormalizedResult] = field(default_factory=list)
+    team_stats: list[NormalizedTeamStats] = field(default_factory=list)

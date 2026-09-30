@@ -23,6 +23,9 @@ class OddsProvider(ABC):
     async def fetch_odds_history(self, external_ids: list[str], at: datetime) -> list[FetchedPayload]:
         raise ProviderError("HISTORY_UNSUPPORTED", "Provider historical backfill is not configured")
 
+    async def fetch_results(self) -> list[FetchedPayload]:
+        raise ProviderError("RESULTS_UNSUPPORTED", "Provider final results/stats are not configured")
+
     @abstractmethod
     def normalize(self, fetched: FetchedPayload) -> NormalizedBatch:
         raise NotImplementedError

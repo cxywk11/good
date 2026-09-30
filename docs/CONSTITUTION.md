@@ -19,7 +19,11 @@
 17. 数据缺失允许为空，禁止编造。
 18. 所有 Schema 变更使用数据库 Migration。
 19. 所有核心模块必须有测试。
-20. 本阶段禁止提前实现 AI 推荐逻辑。
+20. Phase 0–3 的“禁止预测/AI 推荐”是历史阶段限制，不删除或追溯改变当时的数据设计。
+21. Phase 4 允许按明确子阶段增加预测能力；所有未来预测必须 append-only，绑定 analysis_cutoff、model_version、feature_version，可重复、可回测，不允许未来数据泄漏，缺失不得编造。
+22. 历史 Feature 只能消费截止时刻已可见的不可变证据。供应商发布时间、生效时间、采集时间不能代替系统可见时间；后补数据和晚提交事务不能反向进入历史输入。
+23. Feature、赛果、赛后统计和可见性凭据不得 UPDATE/DELETE；纠错追加事实或升级版本。PostgreSQL 是生产 Schema 基准，SQLite 快测不能代替 PostgreSQL 验证。
 
-禁止预测、P_model / P_final、BUY / WATCH / PASS、投注金额、串关、实时比分、滚球、自动投注。
+历史 Phase 0–3 禁止预测、P_model / P_final、BUY / WATCH / PASS、投注金额、串关、实时比分、滚球、自动投注，该约束保留为历史范围记录。
+当前只授权 P4-0 / P4-1 / P4-2 文档、赛后事实和 Feature 基础设施。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；P4-3 及以后等待另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
 演示样例必须包含 mock=true，生产环境不允许启用演示。

@@ -84,6 +84,32 @@ def require_match(db: Session, match_id: str) -> Match:
     return match
 
 
+@router.get("/matches/{match_id}/features")
+def features(match_id: UUID, request: Request, analysis_cutoff: datetime, db: Session = Depends(get_db)):
+    from jc.analysis.contracts import FeatureSnapshotOutput
+    from jc.analysis.features import MatchNotVisible, get_or_create_snapshot
+
+    require_match(db, str(match_id))
+    try:
+        row = get_or_create_snapshot(db, str(match_id), analysis_cutoff, mock=get_settings().demo_mode)
+    except MatchNotVisible as exc:
+        raise HTTPException(404, str(exc)) from None
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    db.commit()
+    return ok(
+        request,
+        FeatureSnapshotOutput(
+            feature_snapshot_id=row.id,
+            match_id=row.match_id,
+            analysis_cutoff=row.analysis_cutoff,
+            feature_version=row.feature_version,
+            feature_data=row.feature_data,
+            data_quality_score=row.data_quality_score,
+        ).model_dump(mode="json"),
+    )
+
+
 @router.get("/matches/{match_id}")
 def detail(
     match_id: UUID, request: Request, analysis_cutoff: datetime | None = None, db: Session = Depends(get_db)

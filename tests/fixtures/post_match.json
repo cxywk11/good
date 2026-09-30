@@ -1,0 +1,15 @@
+{
+  "mock": true,
+  "fixture_note": "Synthetic final regulation-time contract. NOT a verified live Sporttery result/stats response.",
+  "results": [{
+    "external_match_id": "mock-s001", "status": "FINAL", "period": "REGULATION",
+    "finished_at": "2026-09-30T21:00:00Z", "home_score": 2, "away_score": 1,
+    "half_home_score": 1, "half_away_score": 0, "first_goal_team": "HOME", "first_goal_minute": 23
+  }],
+  "team_stats": [{
+    "external_match_id": "mock-s001", "external_team_id": "mock-ars",
+    "status": "FINAL", "period": "REGULATION", "finished_at": "2026-09-30T21:00:00Z",
+    "xg": "1.7000", "xga": null, "shots": 12, "shots_on_target": 5,
+    "possession": "54.0000", "corners": 6, "red_cards": 0
+  }]
+}

@@ -5,7 +5,14 @@ from decimal import Decimal
 from pathlib import Path
 
 from jc.providers.base import OddsProvider
-from jc.providers.contracts import FetchedPayload, NormalizedBatch, NormalizedMatch, OddsQuote
+from jc.providers.contracts import (
+    FetchedPayload,
+    NormalizedBatch,
+    NormalizedMatch,
+    NormalizedResult,
+    NormalizedTeamStats,
+    OddsQuote,
+)
 from jc.providers.http import ProviderError
 from jc.providers.parsing import decimal_odds, parse_line
 from jc.providers.sporttery import SportteryProvider
@@ -46,6 +53,29 @@ class MockSportteryProvider(SportteryProvider):
         return [
             FetchedPayload(self.name, "odds", self.payload(), "fixture://sporttery.json", utcnow(), mock=True)
         ]
+
+    async def fetch_results(self) -> list[FetchedPayload]:
+        # Fixed synthetic completed fixture, not enabled by the scheduler or seed_demo.
+        return [
+            FetchedPayload(
+                self.name,
+                "results",
+                read_fixture("post_match"),
+                "fixture://post_match.json",
+                utcnow(),
+                mock=True,
+            )
+        ]
+
+    def normalize(self, fetched: FetchedPayload) -> NormalizedBatch:
+        if fetched.resource_type != "results":
+            return super().normalize(fetched)
+        if fetched.payload.get("mock") is not True or not fetched.mock:
+            raise ProviderError("FIXTURE_UNLABELED", "Refuse unlabelled final-result fixture")
+        return NormalizedBatch(
+            results=[NormalizedResult.model_validate(row) for row in fetched.payload["results"]],
+            team_stats=[NormalizedTeamStats.model_validate(row) for row in fetched.payload["team_stats"]],
+        )
 
 
 class MockOddsProvider(OddsProvider):

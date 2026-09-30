@@ -45,6 +45,8 @@ Raw 在独立事务提交后才解析；验证失败时业务事务回滚，Raw 
 
 认证采用 Argon2 密码哈希、短期 JWT、哈希存储的刷新令牌轮换和会话撤销。注册只能创建 USER；审核和变更要求 ADMIN，ANALYST 可读取受控管理数据。浏览器令牌只放内存，页面刷新需重新登录。读接口使用统一 JSON 信封和 request_id。
 
-未来可将 Coordinator.execute 作为 Celery 任务入口。当前不引入消息总线、分布式微服务、预测或投注服务。容量、备份和生产加固计划见 BACKLOG 与 OPERATIONS。
+未来可将 Coordinator.execute 作为 Celery 任务入口。当前不引入消息总线、分布式微服务或投注服务。P4-0～P4-2 增加单包 analysis 模块，构建事实 Feature，不运行预测模型。容量、备份和生产加固计划见 BACKLOG 与 OPERATIONS。
 
 认证入口在 Argon2 校验前调用 auth_limits.py。PG 原子 UPSERT 有条件递增配额，限流预算先独立提交，随后 401/409 不会撤回计数；Redis 故障时仍有数据库限流保护。短期桶仅保存带服务密钥的 HMAC 标识，过期清理，不记录原始邮箱、IP 或密码。数据来源限流仍由 Redis 承担，两个边界互不替代。
+
+P4 的 results.py 消费统一 FINAL/REGULATION Contract，继续 Provider → Raw → Normalize → Validate → Store，不建新调度或服务。analysis/visibility.py 在提交后通过独立连接确认不可变输入可见，analysis/features.py 同时检查这些凭据、业务/Raw 时间、历史 MatchVersion 和映射审计，输出独立 append-only FeatureSnapshot。详情展示 API 的历史语义未改；不能将其直接当 Feature 输入。规则及旧数据保守边界见 PHASE4_SPEC。

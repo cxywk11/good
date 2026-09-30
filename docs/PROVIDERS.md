@@ -34,3 +34,5 @@ Raw 在独立事务落库后才解析。非 JSON 响应原文保存在 `_unparse
 fetch_odds_history 能力已在 SDK 和 The Odds API 实现，可通过 Adapter 调用并走相同 Raw/解析管道；尚未提供任意日期历史回补后台任务，不把当前采集当完整历史。海外真实比分盘和供应商初/收盘元数据只在确有授权数据时接入。
 
 参考：[体彩官方赛程](https://www.sporttery.cn/jc/zqszsc/index.html)、[官方赛程脚本](https://static.sporttery.cn/res_1_0/jcw/default/jc/szsc/jc_szsc_gz.js)、[官方计算器脚本](https://static.sporttery.cn/res_1_0/jcw/default/jc/jsq/dataTransfer.js)、[The Odds API v4 文档](https://the-odds-api.com/liveapi/guides/v4/)。验证日期：2026-09-30。
+
+Phase 4 P4-1：SDK 增加可选 fetch_results 与统一 NormalizedResult/NormalizedTeamStats，仅接收 FINAL/REGULATION 和明确 finished_at。MockSportteryProvider 支持显式 results 操作读取 post_match.json；该文件是统一合约的合成 fixture，不是体彩真实结果或 xG 接口样本。所有真实 Adapter 默认 RESULTS_UNSUPPORTED，没有新线上验证声明；未增加自动赛后调度。通过 Raw 优先事务、球队 UUID/事件映射后只追加赛后记录，真实/Mock 隔离规则不变。

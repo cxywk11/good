@@ -8,4 +8,4 @@ def test_health_and_info():
         assert health.status_code == 200
         assert health.json()["success"]
         assert health.json()["request_id"] == health.headers["X-Request-ID"]
-        assert client.get("/api/v1/system/info").json()["data"]["phase"] == "0–3"
+        assert client.get("/api/v1/system/info").json()["data"]["phase"] == "4 (P4-0–P4-2)"

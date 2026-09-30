@@ -25,6 +25,9 @@ def make_engine(url: str):
 engine = make_engine(get_settings().database_url)
 SessionLocal = sessionmaker(engine, expire_on_commit=False)
 
+# Install post-commit visibility proofs for immutable analysis inputs (Core connection, no recursion).
+from jc.analysis import visibility as _visibility  # noqa: E402,F401
+
 
 def get_db() -> Generator[Session, None, None]:
     with SessionLocal() as session:

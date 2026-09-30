@@ -54,4 +54,6 @@ erDiagram
 
 后续迁移 006 新增 auth_rate_buckets：HMAC key、attempts、expires_at，带过期索引和正数约束；这是可过期的认证控制计数，不是业务历史，不应用 append-only 触发器。当前共六个顺序迁移。
 
+Phase 4 迁移 007_feature_foundation 追加 match_results、team_match_stats、feature_snapshots、analysis_visibility，当前共七个顺序迁移。四表均数据库级 append-only，引用旧 UUID/Raw/比赛版本/映射而不重建旧表。赛后表保存 observed_at、finished_at、created_at 和可空源时间；Feature 的 JSON 在 PG 为 JSONB，唯一键为比赛/cutoff/版本；可见性凭据按不可变表名/行 UUID 唯一，证明独立连接读到已提交事实的最早已记录时间。完整字段/约束和可见性边界见 PHASE4_SPEC。
+
 重点索引包括 `(match_id, provider, market_type, collected_at)`、`(match_id, collected_at, created_at)`、观察时间、销售日、开球时间、映射状态及 `(entity_type, entity_id, created_at)`。当前使用窗口查询取得 latest，未建立会丢历史的覆盖表。

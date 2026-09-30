@@ -22,6 +22,7 @@ from jc.odds import store_quotes
 from jc.providers.base import OddsProvider
 from jc.providers.contracts import FetchedPayload, NormalizedBatch
 from jc.providers.http import ProviderError
+from jc.results import store_post_match
 from jc.time import utcnow
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,11 @@ class IngestionService:
         if not provider.is_primary:
             for item in batch.matches:
                 ingest_external_match(db, provider.name, fetched, item, get_settings())
-            return len(batch.matches) + store_quotes(db, provider, fetched, batch.odds)
+            return (
+                len(batch.matches)
+                + store_quotes(db, provider, fetched, batch.odds)
+                + store_post_match(db, provider, fetched, batch)
+            )
         count = 0
         for item in batch.matches:
             existing = db.scalar(select(Match).where(Match.sporttery_match_id == item.external_id))
@@ -126,7 +131,12 @@ class IngestionService:
                 )
             )
             count += 1
-        return count + store_quotes(db, provider, fetched, batch.odds)
+        db.flush()
+        return (
+            count
+            + store_quotes(db, provider, fetched, batch.odds)
+            + store_post_match(db, provider, fetched, batch)
+        )
 
     async def run(
         self,
@@ -159,11 +169,18 @@ class IngestionService:
         last_raw = None
         status = "SUCCESS"
         try:
-            fetched_list = await (
-                provider.fetch_matches() if operation == "matches" else provider.fetch_odds()
-            )
+            fetch = {
+                "matches": provider.fetch_matches,
+                "odds": provider.fetch_odds,
+                "results": provider.fetch_results,
+            }.get(operation)
+            if fetch is None:
+                raise ProviderError("UNKNOWN_OPERATION", "Unsupported ingestion operation")
+            fetched_list = await fetch()
             for fetched in fetched_list:
                 last_raw = fetched.raw_id or self.record_raw(fetched)
+                if fetched.mock and not get_settings().demo_mode:
+                    raise ProviderError("MODE_CONFLICT", "Mock payloads require demo mode")
                 batch = provider.normalize(fetched)
                 with self.sessions() as db:
                     with db.begin():

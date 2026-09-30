@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from jc.api import ok
+from jc.auth_limits import auth_budget
 from jc.config import get_settings
 from jc.db import get_db
 from jc.models import AuditLog, AuthSession, RefreshToken, User
@@ -105,6 +106,7 @@ def analyst(user: User = Depends(current_user)) -> User:
 @router.post("/register", status_code=201)
 def register(body: Credentials, request: Request, db: Session = Depends(get_db)):
     jwt_key()
+    auth_budget(db, request, "register")
     user = User(email=str(body.email).lower(), password_hash=passwords.hash(body.password), role="USER")
     db.add(user)
     try:
@@ -128,6 +130,7 @@ def register(body: Credentials, request: Request, db: Session = Depends(get_db))
 @router.post("/login")
 def login(body: Credentials, request: Request, db: Session = Depends(get_db)):
     jwt_key()
+    auth_budget(db, request, "login", str(body.email))
     user = db.scalar(select(User).where(User.email == str(body.email).lower()))
     valid = passwords.verify(body.password, user.password_hash if user else dummy_hash)
     if not user or not valid or not user.active:
@@ -151,6 +154,8 @@ def login(body: Credentials, request: Request, db: Session = Depends(get_db)):
 
 @router.post("/refresh")
 def refresh(body: RefreshBody, request: Request, db: Session = Depends(get_db)):
+    jwt_key()
+    auth_budget(db, request, "refresh")
     token = db.scalar(
         select(RefreshToken).where(RefreshToken.token_hash == digest(body.refresh_token)).with_for_update()
     )

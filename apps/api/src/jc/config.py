@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:8080"
     admin_email: str = ""
     admin_password: str = ""
+    auth_window_seconds: int = Field(900, ge=1, le=86400)
+    auth_login_account_limit: int = Field(10, ge=1)
+    auth_login_ip_limit: int = Field(60, ge=1)
+    auth_register_ip_limit: int = Field(10, ge=1)
+    auth_refresh_ip_limit: int = Field(120, ge=1)
 
     @model_validator(mode="after")
     def validate_config(self):

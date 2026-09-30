@@ -52,4 +52,6 @@ erDiagram
 
 五个顺序迁移：初始表 → 不可变触发器 → 观察表 → 观察保护与确认唯一性 → 标签观察时间与审计索引。迁移固定定义，不依赖当前 ORM 自动重建历史 Schema。PG 实测包含 upgrade/head、check 与 downgrade/base 往返。
 
+后续迁移 006 新增 auth_rate_buckets：HMAC key、attempts、expires_at，带过期索引和正数约束；这是可过期的认证控制计数，不是业务历史，不应用 append-only 触发器。当前共六个顺序迁移。
+
 重点索引包括 `(match_id, provider, market_type, collected_at)`、`(match_id, collected_at, created_at)`、观察时间、销售日、开球时间、映射状态及 `(entity_type, entity_id, created_at)`。当前使用窗口查询取得 latest，未建立会丢历史的覆盖表。

@@ -6,6 +6,8 @@
 
 **工程实现和 Mock→真实 PostgreSQL→API→前端演示已完成；全部 Definition of Done 尚未满足，不宣称第一阶段正式验收通过。** Task 8 的线上数据验收以及 Gate 1/2、Gate 3/4 的真实数据部分仍受外部条件阻塞。没有开发 AI 分析、推荐、下注、滚球或资金功能。
 
+2026-09-30 后续：用户确认暂无真实源凭据，先推进本机可验证项。已补充认证限流、迁移 006、本地预检与 PostgreSQL 备份恢复演练，详见 [本机验收增量](LOCAL_VALIDATION.md)。外部阻塞 Gate 状态不变。
+
 ## 1. 当前架构
 
 React 19 + TypeScript + Vite + Ant Design + TanStack Query + Router + ECharts；FastAPI + Pydantic 2 + SQLAlchemy 2 + Alembic；PostgreSQL、Redis 与 APScheduler。模块位于单 Python 包，Adapter/采集/实体/赔率/任务边界明确。完整结构见 [ARCHITECTURE](ARCHITECTURE.md)。
@@ -27,7 +29,7 @@ React 19 + TypeScript + Vite + Ant Design + TanStack Query + Router + ECharts；
 | 7 曲线 | 通过（演示数据） | ECharts 展示分市场、选项与盘口的历史，图例可控制公司显示 |
 | 8 自动与审核 | 通过（fixture 集） | 显式身份映射后评分；低置信/歧义 REVIEW，无可靠身份 UNMATCHED；真实样本准确率未评估 |
 | 9 状态可见 | 通过 | 质量中心显示 MATCHED 8、REVIEW 4、UNMATCHED 4；主池仍 3 场 |
-| 10 测试 | 通过（现有自动测试） | 后端 50 项分别在 SQLite / PostgreSQL 通过；前端 1 项通过；没有跳过失败用例 |
+| 10 测试 | 通过（现有自动测试） | 后续增至 56 项，分别在 SQLite / PostgreSQL 通过；前端 1 项通过；没有跳过失败用例 |
 
 不以 Gate 10 的单元/集成测试通过替代尚未运行的 Docker、真实 Redis 和供应商线上验收。
 
@@ -46,7 +48,7 @@ React 19 + TypeScript + Vite + Ant Design + TanStack Query + Router + ECharts；
 
 ## 7. 技术债
 
-缺少真实 Redis/Compose 演练、Python 跨平台依赖锁、登录限流、邮件验证/找回、千万行压测、完整浏览器自动回归和备份恢复演练。前端构建有大 chunk 提示，Starlette TestClient 有一条 httpx 弃用警告；均保留记录，没有用关闭告警掩盖。完整列表见 [BACKLOG](BACKLOG.md)。
+缺少真实 Redis/Compose 演练、Python 跨平台依赖锁、邮件验证/找回、千万行压测、完整浏览器自动回归和生产异机灾备演练。前端构建有大 chunk 提示，Starlette TestClient 有一条 httpx 弃用警告；均保留记录，没有用关闭告警掩盖。基础认证限流与本机备份恢复已补齐。完整列表见 [BACKLOG](BACKLOG.md)。
 
 ## 8. 下一阶段前建议
 

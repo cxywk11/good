@@ -300,3 +300,11 @@ class AuthSession(Identity, Base):
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime())
+
+
+class AuthRateBucket(Base):
+    __tablename__ = "auth_rate_buckets"
+    key: Mapped[str] = mapped_column(String(120), primary_key=True)
+    attempts: Mapped[int]
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
+    __table_args__ = (CheckConstraint("attempts > 0", name="positive_auth_attempts"),)

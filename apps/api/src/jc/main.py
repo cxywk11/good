@@ -93,6 +93,7 @@ async def request_context(request: Request, call_next):
 async def http_error(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
+        headers=exc.headers,
         content={
             "success": False,
             "data": None,

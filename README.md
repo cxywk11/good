@@ -59,6 +59,8 @@ PostgreSQL 集成测试：设置 `TEST_DATABASE_URL` 指向**空的独立测试�
 
 ## 文档
 
+本机预检：`.venv/Scripts/python.exe infra/check_local.py`；备份恢复演练：`.venv/Scripts/python.exe infra/backup_restore_drill.py --pg-bin .runtime/pgsql/bin`。报告保存在 artifacts；预检遇到未满足条件会返回非零退出码。认证限流设置与复验范围见运维文档。
+
 - [架构](docs/ARCHITECTURE.md)、[ER 与数据模型](docs/DATA_MODEL.md)
 - [实际数据源与接入配置](docs/PROVIDERS.md)、[实体映射](docs/ENTITY_RESOLUTION.md)
 - [赔率与时间语义](docs/ODDS_STORAGE.md)、[开发硬性规则](docs/CONSTITUTION.md)

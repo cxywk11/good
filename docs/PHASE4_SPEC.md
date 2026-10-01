@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-已交付 P4-0～P4-3 与 P4-4A Score Probability Mathematics；当前数学层规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付 P4-0～P4-3、P4-4A Score Probability Mathematics 与 P4-4B1 Goals Baseline Lambda Estimator；当前基线规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -321,3 +321,49 @@ Golden Cases 使用 lambda=(1,1)/(2,1)、rho=0，独立 80 位 Decimal + factori
 本轮文件清单共 8 个：新增 `apps/api/src/jc/analysis/score_matrix.py`、`tests/test_score_matrix.py`、`docs/DECISIONS/ADR-010-score-probability-math.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`，并同步 `README.md`、`docs/CONSTITUTION.md` 的当前阶段声明。没有新建 score_contracts.py 或其他空模块。
 
 P4-4B 建议先评审冻结 Feature 的真实历史覆盖、参数来源与缺失规则，再定义球队强度/λ/rho 的可复现估计和按时间拆分验证。当前没有实施 P4-4B，等待数学层人工复核。
+
+## P4-4B1 Goals Baseline Lambda Estimator
+
+P4-4A 经人工复核后，本阶段新增 `analysis/goals_baseline.py`。纯函数 `estimate_goals_baseline(feature: FeatureData)` 仅消费 Frozen FeatureSnapshot 内的 `context.match` 两队 ID 和 `team_strength.past_results`，不回查任何数据库、Provider、网络或当前时间，也不读取赔率、odds_movement、past_stats/xG。原 Feature 构建器继续承担截止时刻、可见性与目标赛果隔离，不改 p4-features-v1。
+
+| 规则 | goals-baseline-v1 |
+| --- | --- |
+| 去重 | match_id 合并；相同比分计一场，记录不同 source 数量；冲突整场排除，保留 CONFLICTING_RESULT_SOURCES 和 excluded_match_ids |
+| 无效记录 | 缺 ID/来源、负数或非整数比分、球队归属错误、无效时间拒绝；有 match_id 时保守排除整场，INVALID_RESULT_RECORD |
+| 排序 | 一致来源取最早 finished_at（UTC），按时间降序、match_id 升序；不依赖数组/字典/source 顺序 |
+| 窗口 | 去重/排除后每队分别最近 20 场，最少 5 场；相互交锋两队各计一次，无额外天数限制 |
+| 权重 | 等权；按历史实际主/客身份计算 GF/GA，不做主客场修正、时间衰减、联赛 prior 或 shrinkage |
+| 进失球率 | GF_rate=总进球/场数，GA_rate=总失球/场数 |
+| lambda | home=(home GF+away GA)/2；away=(away GF+home GA)/2 |
+| rho | 字符串 0，rho_source=fixed-zero-v1；独立 Poisson，没有拟合 rho |
+| 数值 | 独立 50 位 Decimal Context、ROUND_HALF_EVEN；无 float、无默认 lambda |
+| 样本不足 | 任一队不足 5 场、目标 ID 缺失或同队对同队：INSUFFICIENT_DATA，两个 lambda 与 score=NULL，不调用引擎 |
+| 超出引擎范围 | TailToleranceError → OUT_OF_RANGE / SCORE_ENGINE_RANGE_EXCEEDED；保留原 lambda，score=NULL，不 clamp 或调整引擎 |
+| 输出 | JSON-ready Result，含 version、score_engine_version、两队历史场数/率/入选 ID/来源数、lambda、rho、score、稳定排序诊断及排除 ID |
+
+合格输入调用原 `build_score_matrix(lambda_home, lambda_away, Decimal("0"))`；1X2/总进球/TTG 完全源自返回矩阵。没有从赔率读取 HHAD lines，handicap 为空。所有规则及数值精度随 GOALS_BASELINE_VERSION 固定，变化需升级版本；详细契约见 [ADR-011](DECISIONS/ADR-011-goals-baseline-lambda.md)。
+
+Golden Case 使用指定的两队 5 场进失球序列，历史主客场交错：Home 率 (2,1)、Away 率 (1,2)，lambda=(2,1)、rho=0，比分结果严格等于直接调用 score-math-v1(2,1,0)。输入字段访问守卫及冻结快照集成测试验证赔率/xG不被读取、目标结果隔离，以及数据库后续变化不会改变旧输入的结果。
+
+**不能称为最终真实比赛预测。** 当前仅得到 Goals-only Football Baseline，用作后续模型必须击败的比较基准；没有真实全量球队历史与时间拆分回测验收。没有新增持久化、Migration、HTTP API 或前端，也没有实施下一阶段。
+
+### P4-4B1 验证
+
+最终实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 新增测试 | 61 项（参数化后），覆盖所列 33 类要求；原 263 项 + 新增 61 项 = 324 项 |
+| SQLite 全量 pytest | 324 passed，46.01 秒 |
+| PostgreSQL 全量 pytest | PostgreSQL 17.11，独立 127.0.0.1:55433 空库 jc_goals_baseline_test：324 passed，53.14 秒 |
+| 旧模块回归 | test_features / test_results / test_market_model / test_score_matrix / test_odds 全部纳入两套全量，旧测试及模块均未修改 |
+| Ruff | apps/api/src、tests 全部通过；两个新 Python 文件 format --check 通过 |
+| mypy | 36 个源文件通过 |
+| Schema / API | 无新表、Migration 或 HTTP API；001～008 未修改；原 upgrade/check/downgrade 集成测试通过 |
+| Golden Case | 两队率 (2,1)/(1,2) → lambda=(2,1)、rho=0 → 与 score-math-v1 直接调用完全一致 |
+
+两套测试均无失败、无跳过，保留原有 1 条 Starlette/httpx 弃用警告。PG 首轮发现新增测试的 I/O 守卫作用域覆盖了 fixture 清理，已限制为估计器调用期间；恢复本轮专用测试库至 base 后完成全量复验，没有修改业务代码或旧测试来绕过该问题。最终确认专用测试库仅剩空 alembic_version 表，没有业务表；本轮启动的独立测试实例已正常停止，没有修改或迁移演示业务库。
+
+本机日志（Git 忽略）：`artifacts/goals-baseline-sqlite-tests.txt`、`artifacts/goals-baseline-postgres-tests.txt`；首轮排查日志另存 `artifacts/goals-baseline-postgres-first-run.txt`。没有新增依赖；前端无修改，本轮未重跑前端构建。
+
+共 8 个文件：新增 `apps/api/src/jc/analysis/goals_baseline.py`、`tests/test_goals_baseline.py`、`docs/DECISIONS/ADR-011-goals-baseline-lambda.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`、`README.md`。完成后停止于 P4-4B1，等待人工复核，不继续下一阶段。

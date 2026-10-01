@@ -75,4 +75,20 @@ score-math-v1：动态 Poisson 边缘 → DC 四格修正 → 统一归一化矩
         1X2 / 整数 HHAD / 总进球 / 体彩 TTG
 ```
 
-仅为纯数学转换器；不读取 Feature/Odds/Market Snapshot、DB、网络或时钟，不估计参数，不创建预测表/API，也不接入前端。50 位 Decimal、每侧尾部界 1e-12、最高 30 球；不足则显式失败，保留截断与归一化元数据。所有派生概率来自同一矩阵，JSON 核心概率为字符串。详见 [ADR-010](DECISIONS/ADR-010-score-probability-math.md)。未来 P4-4B 参数估计仍须消费截止时刻冻结的 FeatureSnapshot；当前尚不能产生真实比赛预测。
+仅为纯数学转换器；不读取 Feature/Odds/Market Snapshot、DB、网络或时钟，不估计参数，不创建预测表/API，也不接入前端。50 位 Decimal、每侧尾部界 1e-12、最高 30 球；不足则显式失败，保留截断与归一化元数据。所有派生概率来自同一矩阵，JSON 核心概率为字符串。详见 [ADR-010](DECISIONS/ADR-010-score-probability-math.md)。
+
+P4-4B1 增加 `analysis/goals_baseline.py` 纯函数，复用该数学引擎：
+
+```text
+历史 DB → 原 Feature 构建器 @ analysis_cutoff → Frozen FeatureSnapshot
+                                                     ↓ 仅两队 ID / past_results
+                        goals-baseline-v1：去重排除 → 每队最近 20 场（至少 5 场）
+                                                     ↓ 等权 GF/GA
+                                   lambda_home / lambda_away / rho=0
+                                                     ↓
+                                            score-math-v1
+```
+
+估计器无 DB、Provider、网络、时钟或 Market 依赖，不读取 market、odds_movement 或 past_stats/xG。赛果跨源按 match_id 合并，比分冲突整场排除；历史方向按实体 ID 计算，交锋可同时属于两队。缺样本不生成 lambda，超出引擎范围保留 lambda 并显式返回 OUT_OF_RANGE；两种情况 score 均为空。无默认值、主场优势、衰减或 prior。目标隔离和可见性仍由 Feature 边界承担；旧快照内容与底座保持不变。
+
+结果仅是内存中的 Goals-only Football Baseline，没有 Model Snapshot、预测 API 或前端接线，不能称为最终真实比赛预测。版本与选择规则见 [ADR-011](DECISIONS/ADR-011-goals-baseline-lambda.md)。

@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics 与 P4-4B1 Goals Baseline Lambda Estimator；P4-4C Model Evaluation Core 已实施，待人工复核。当前评估规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics、P4-4B1 Goals Baseline Lambda Estimator 与 P4-4C Model Evaluation Core；P4-4D1 Research Replay Semantics Core 已实施，待人工复核。当前研究规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -441,3 +441,50 @@ FROZEN_SAMPLE_SET 只表示输入固定，不认证真实线上来源或无时�
 文件共 9 个：新增 `apps/api/src/jc/analysis/evaluation.py`、`tests/test_evaluation.py`、`docs/DECISIONS/ADR-012-model-evaluation-core.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`、`README.md`、`tests/test_acceptance.py`。前端未改，未重跑其 test/build；真实 Provider、Docker/Redis、研究数据集与发布工件归档等既有 Gate 不因此关闭。
 
 本轮停止于 P4-4C，等待人工复核，不继续 Research Replay 或后续模型/推荐阶段。
+
+## P4-4D1 Research Replay Semantics Core
+
+P4-4C 人工复核后，授权独立的 research-replay-v1。只新增 `analysis/research_replay.py`，消费 frozen ResearchMatch、ResearchOddsQuote、ResearchResult、ResearchSource / ResearchDataset 与 ReplayCutoffSpec；没有修改 live Feature、Market、Goals、Evaluation 核心及可见性语义。
+
+LIVE_AS_OBSERVED 代表系统当时实际看到的数据；RESEARCH_REPLAY 代表有明确来源时间证据和研究规则的假设回放，两者不能混淆。Research context/报告明确 evaluation_mode=RESEARCH_REPLAY、live_visibility_proven=false。禁止回填过去的 analysis_visibility；Research Feature 和模型结果只在内存中，不能写 FeatureSnapshot 或 MarketModelSnapshot。
+
+### 固定规则
+
+| 项目 | research-replay-v1 |
+| --- | --- |
+| 可用性 | 显式 replay_available_at + availability_basis；SOURCE_SNAPSHOT_AT、PROVIDER_PUBLISHED_AT、PROVIDER_EFFECTIVE_AT、VERIFIED_ARCHIVE_TIMESTAMP 四种；provider basis 要求等于对应证据时间，无 magic lag |
+| 缺证据 | 显式 None/None 标记 REPLAY_UNAVAILABLE 并排除；GUESSED/UNKNOWN/非法枚举拒绝；所有非空时间 aware → UTC |
+| Cutoff | 只接受正整数 MINUTES_BEFORE_KICKOFF；一个 run 一个策略；T-30M 与 T-360M 分开运行 |
+| 目标/赔率 | available_at 及非空 published/effective 均 ≤ cutoff；目标不通过则 NOT_REPLAYABLE |
+| Latest/previous | provider/bookmaker/market/selection/精确 Decimal raw line 分组；coalesce(effective,published,available) + record_id 降序；仅从已筛过的可见记录中取前两条 |
+| 历史赛果 | 目标 Result 先硬排除；历史 Match 与 Result 三时间门槛、kickoff < finished < cutoff；两者 canonical team ID 完整，且涉及目标至少一队；多来源冲突交给原 Goals |
+| Label | 目标赛果不受赛前 cutoff 限制，只进 EvaluationSample.actual_result；比分冲突 NOT_EVALUABLE + CONFLICTING_TARGET_RESULT，不投票/择新/优先源 |
+| Feature | 兼容原 FeatureData；past_stats=[]，mapping_id/version=null 并注明 Dataset canonical identity；独立 research_data_quality，无总分 |
+| Provenance | dataset/version、match/cutoff、完整 manifest；稳定 input_record_ids 包含 previous 与历史 match 证据，label_record_ids 单独保留 |
+| Evaluation | 使用原 adapter/evaluate_models；prediction_source 带 @research-T{minutes}M；外层研究模式，内层仍 FROZEN_SAMPLE_SET；显式目标总数作两模型共同 eligible 分母 |
+
+入口 `build_research_feature` 可直接供原 Market/Goals 纯函数消费。`build_research_evaluation_samples` 返回 immutable 样本和 JSON-safe 报告；`run_research_evaluation` 运行原评估数学并保留报告。所有代码无 DB、网络、Provider、文件读取、当前时间或 analysis_visibility 依赖；无正式 Prediction、Schema、Migration、公开 API 或前端。
+
+完整 contract、边界、诊断计数口径及版本升级规则见 [ADR-013](DECISIONS/ADR-013-research-replay-semantics.md)。测试 fixture 为 12 场历史、1 场目标、多公司多次外部报价，两队各 6 场历史，两个模型均得到合法 EvaluationResult；不断言谁胜过谁。
+
+**仍不能进行真实三赛季模型优劣结论。** 当前只有语义和纯函数 fixture；真实来源获取、时间证据验证、覆盖率检查及持久化导入尚未开始。本轮完成后停止，不继续爬虫、Research Dataset DB、xG、Elo、Ensemble 或 Recommendation。
+
+### P4-4D1 验证
+
+最终实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 新增测试 | 122 项（参数化后）；原 429 项 + 新增 122 项 = 551 项 |
+| SQLite 全量 pytest | 551 passed，72.65 秒 |
+| PostgreSQL 全量 pytest | PostgreSQL 17.11，独立 127.0.0.1:55433 专用空库 jc_research_replay_test：551 passed，77.19 秒 |
+| 指定旧模块回归 | test_features / test_results / test_market_model / test_score_matrix / test_goals_baseline / test_evaluation / test_odds 均包含在两套全量中并通过；原测试和业务代码未改 |
+| Ruff | `ruff check apps/api/src tests` 全部通过；两个新 Python 文件 format --check 通过 |
+| mypy | apps/api/src 38 个源文件全部通过 |
+| 隔离验证 | AST 依赖/调用守卫、独立进程禁止导入 live/ORM 模块、运行时拒绝 SQL/文件/网络/时钟访问均通过 |
+| Migration / Schema | 无新增或修改；原 upgrade/check/downgrade 测试两种数据库通过，head 保持 008_market_probability |
+| API / 前端 / 依赖 | 均无新增或修改 |
+
+两套无失败、无跳过，保留原有一条 Starlette/httpx 弃用警告。日志保存在本机 Git 忽略的 `artifacts/research-replay-sqlite-tests.txt`、`artifacts/research-replay-postgres-tests.txt`。数据库测试只使用专用空库；研究模块自身不访问 DB。结束时确认专用库仅剩空 alembic_version、无业务表，本轮启动的独立 PostgreSQL 测试实例已停止，没有迁移或修改演示业务库。
+
+共 7 个文件：新增 `apps/api/src/jc/analysis/research_replay.py`、`tests/test_research_replay.py`、`docs/DECISIONS/ADR-013-research-replay-semantics.md`；修改本规范、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`。停止于 P4-4D1，等待人工复核。

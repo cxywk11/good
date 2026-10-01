@@ -109,3 +109,24 @@ P4-4C 增加标准库纯模块 `analysis/evaluation.py`：
 Adapter 只转换已有内容，缺概率返回不可评估；不从体彩补外部共识、不重新运行模型、不查询 DB/Provider/快照，也不访问网络或当前时间。调用者提供 eligible 分母及显式 baseline；指标无 winner、ROI 或推荐。`temporal_split` 仅按上游提供的带时区比赛时间做 past → future 分组，没有训练或随机切分。
 
 FROZEN_SAMPLE_SET 不证明 live as-of 可见性。未来 LIVE_AS_OBSERVED 与 RESEARCH_REPLAY 必须另立语义；今天导入的历史不得冒充系统过去可见，禁止把 provider published_at 写成过去的 analysis_visibility.visible_at。本轮没有历史回放、表、Migration 或新 API，详见 [ADR-012](DECISIONS/ADR-012-model-evaluation-core.md)。
+
+P4-4D1 在独立 `analysis/research_replay.py` 中新增研究回放语义，不改上述 live 数据流：
+
+```text
+调用方提供 immutable ResearchDataset + 单一 ReplayCutoffSpec
+   │ 明确的来源时间证据 / canonical IDs / source_manifest
+   ↓
+research-replay-v1：三时间筛选、latest/previous、目标赛果硬排除
+   ↓ 内存 FeatureData（context.research / 独立 research_data_quality）
+   ├── build_market_data ──────── market-v1 ────────────┐
+   └── estimate_goals_baseline ── goals-baseline-v1 ────┤
+目标 ResearchResult ── 唯一比分 / 仅赛后 Label ─────────┤
+                                                      ↓
+               原 Evaluation adapters / evaluate_models
+                                                      ↓
+RESEARCH_REPLAY 报告；live_visibility_proven=false；仅内存
+```
+
+ResearchMatch/OddsQuote/Result 与 ResearchSource/Dataset 均为 frozen contract；集合复制为稳定 tuple。不存在 ORM/DB、Provider、网络、时钟、文件读取或 analysis_visibility 依赖。研究结果不写 live FeatureSnapshot/MarketModelSnapshot；其 odds_snapshot_id 只是兼容字段中的研究 record_id，不是数据库引用。
+
+同一个 run 统一 MINUTES_BEFORE_KICKOFF；不同 cutoff 独立运行并在 prediction_source 加 @research-T{minutes}M，保留 evaluation-v1 的唯一约束。外层研究模式与内层 FROZEN_SAMPLE_SET 数学语义同时保留。显式目标群包含所有失败/缺失目标作为 coverage 分母；目标 label 来源和输入 record IDs 分开追溯。详细规则见 [ADR-013](DECISIONS/ADR-013-research-replay-semantics.md)。没有真实历史获取、研究持久化、公开 API 或新模型。

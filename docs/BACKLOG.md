@@ -1,6 +1,6 @@
 # 待办与技术债
 
-本文件不授权扩大本阶段范围。2026-10-01 P4-0～P4-3、P4-4A 比分概率数学层及 P4-4B1 Goals-only Football Baseline 已经人工复核；P4-4C Model Evaluation Core 已实施，待人工复核。后续模型与功能等待明确指令。
+本文件不授权扩大本阶段范围。2026-10-01 P4-0～P4-3、P4-4A 比分概率数学层、P4-4B1 Goals-only Football Baseline 与 P4-4C Model Evaluation Core 已经人工复核；P4-4D1 Research Replay Semantics Core 已实施，待人工复核。后续模型与功能等待明确指令。
 
 ## 当前阶段验收阻塞
 
@@ -64,6 +64,16 @@
 - 未来三赛季研究须单独设计 RESEARCH_REPLAY / historical_research_dataset，与 LIVE_AS_OBSERVED 严格区分；不得用 provider published_at 回填 analysis_visibility，不得让今天导入的旧历史冒充当时 live-visible Feature。
 - 时间拆分只按显式 UTC 比赛时间分组，没有训练、历史回放、置信区间、显著性检验或校准器拟合。固定 10 桶的 ECE 依赖样本量，不能包装成 confidence score。
 - Research Replay、xG、Elo、主客场增强、时间衰减、rho 拟合、ML、Ensemble、Recommendation 与 ROI/EV 等等待另行授权；本轮完成后停止。
+
+## P4-4D1 后续债务（不在本轮实施）
+
+- research-replay-v1 已提供纯 contract、来源时间筛选、单一 cutoff、内存 Feature 与 Evaluation 集成；此前 P4-4C 的“另立研究语义”事项仅在这一纯函数范围关闭，没有真实三赛季研究结论。
+- 尚未获取或验证任何真实历史源：需来源授权、快照/发布时间/生效时间/归档证据核验、稳定 canonical team IDs、赛事/球队历史覆盖率及缺失分析。manifest 记录调用方的证据声明，纯函数不会认证外部来源。
+- Research Dataset 持久化、不可变导入审计、原始工件保存、研究 Feature 独立表/工件及重放发布归档，均须语义人工复核后另行设计。不得借用 live FeatureSnapshot/MarketModelSnapshot 或回填 analysis_visibility。
+- Match V1 每个 research_match_id 只接收一个 canonical 定义；未来比赛时间/身份版本解析、固定延迟政策、不同来源证据可靠性规则要显式设计并升级 replay_version。今天导入数据的系统可见时间永远不能倒填。
+- 历史冲突仍交给 goals-baseline-v1；目标 label 任何比分冲突一律不可评估，无人工偏好裁决。来源赛果更正与标签冻结时点/研究数据版本治理尚未建立。
+- 当前计数是来源记录/可见报价诊断，未经真实覆盖验收；fixture 的合法 EvaluationResult 不证明任何模型优胜。完整性、样本选择偏差、跨 provider bookmaker 重复及统计显著性仍需未来真实研究。
+- 没有 Historical Crawler、Research Dataset DB、xG、Elo、Ensemble、Recommendation、ROI/EV、Model Snapshot 或公开 API；本轮完成后停止。
 
 ## 已关闭的本机待办（2026-09-30 后续）
 

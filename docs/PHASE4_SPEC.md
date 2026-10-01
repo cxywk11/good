@@ -574,3 +574,14 @@ quality_summary 包含 match_count、sporttery_target_verified_count、odds_coun
 两套全量均无失败、无跳过，只有原有一条 Starlette/httpx 弃用警告。日志在 Git 忽略的 `artifacts/research-persistence-sqlite-tests.txt`、`artifacts/research-persistence-postgres-tests.txt`；postflight JSON 确认专用 PG 测试库仅余空 alembic_version。专用测试实例完成后停止，未迁移或修改演示业务库。
 
 本轮只交付 D2A，等待人工复核；没有获取过去三完整赛季或当前赛季真实历史，也不据合成 Evaluation 样本判断模型优劣。D2B、xG、Elo、ML、Ensemble、Recommendation、EV/ROI 均未实施。
+
+## P4-4D2B Source Discovery 与 Pilot 阻塞验收
+
+2026-10-01 用户确认 D2A 已人工复核，授权先做 1～3 个历史销售日 / 50～100 场 Pilot。
+实际探测候选窗口 2026-09-26～28：官方历史开售/赛果 API HTTP 567，The Odds API 缺凭据且匿名请求 401。
+保存 26 个 probe、25 个 HTTP response Raw；没有实际 Target、VERIFIED、SEALED 或 Research Replay。
+T-30M/T-90M/T-360M 分别为 BLOCKED_NOT_RUN；Gate A～F 均 BLOCKED，不适合扩展三赛季。
+新增独立研究探测模块、日期范围限制、Raw-first/secret 防护和报告；未对未验证来源提前写业务 Adapter。
+测试 754 passed、1 网络项 skipped；Ruff/Mypy 通过；本机 PostgreSQL 未运行，alembic check 连接超时。
+Migration 仍为 009，冻结 v1 和 LIVE 均无改动。完整证据、限制与 28 项汇报见
+[RESEARCH_SOURCES](RESEARCH_SOURCES.md) 和 [PILOT_DATASET_REPORT](PILOT_DATASET_REPORT.md)。

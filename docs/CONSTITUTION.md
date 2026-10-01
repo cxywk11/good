@@ -45,3 +45,8 @@ P4-4D1.1 是 pre-acceptance correctness fix，保留 research-replay-v1；现已
 36. Research Import/Seal/Load 复用冻结 v1 的 availability 与 chronology，缺证据保持 NULL，不推断可用时间。只物化 SEALED ResearchDataset，再交给原纯 replay；源 metadata 不得存 API key、Authorization、cookie、password 或 token。
 
 D2A 只授权 Schema、显式 Import Contract、Raw Artifact、Dataset Version、Validation、Append-only、Materialization；禁止互联网爬虫、公开研究上传/回测 API，以及自动进入 D2B。当前没有真实三完整赛季 + 当前赛季数据。完整决定见 [ADR-014](DECISIONS/ADR-014-research-dataset-persistence.md)。
+
+2026-10-01 后续授权：D2A 已通过人工复核；P4-4D2B 仅允许 Source Discovery 与 1～3 个历史销售日 / 50～100 场真实 Pilot。
+上文 D2A 的禁止联网属于该阶段历史范围。D2B 必须先验证来源、保存脱敏 Raw，再实现独立 Research Adapter；
+官方开售池证据失败则 Pilot BLOCKED 并停止真实回测，不绕过验证、不补造 VERIFIED，也不扩展三个完整赛季。
+本轮 Gate A～F 全部 BLOCKED，详见 [Pilot 报告](PILOT_DATASET_REPORT.md)；冻结 replay-v1 与所有模型规则仍保持原样。

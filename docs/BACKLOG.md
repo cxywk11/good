@@ -94,3 +94,12 @@
 - Source verification/retrieval/license 变更、Raw metadata 修订或 Match 定义更正使用新 dataset_version；旧版本不可更新。数据量增大后再设计冷存储/专用 DB，本阶段 payload 保留在 JSONB，无 S3/MinIO/Kafka/分区。
 - 当前 Seal/Load 完整读取 Dataset 并重新校验/hash，适用于本阶段本地 fixture 和初步批量导入；真实规模基准、流式校验、权限角色、独立研究发布工件归档尚未验收。
 - xG、Elo、ML、Ensemble、Recommendation、EV/ROI、公开研究 API 和模型优劣结论仍未实施；D2A 完成后停止，不自动推进 D2B。
+
+## P4-4D2B 实测后的阻塞项（2026-10-01）
+
+- D2A 已获人工复核，D2B 小范围 Source Discovery 已获授权并实施；上面的 D2A 停止条款是历史阶段边界。
+- 官方历史池 HTTP 567；The Odds API 无密钥，账号历史权限未知。真实 Target/VERIFIED/SEALED/Replay 仍为 0。
+- 先取得官方合法可访问的历史证据与外部历史快照，再按真实样例实现 Research Adapter、稳定实体 mapping 和 D2A 导入；不扩展三赛季。
+- 候选结果源缺少已取得的赛果、finished_at 和可用时间证据；不可从开球时间加固定时长或用 lastUpdated 代替。
+- 本次 PostgreSQL 未启动，现有数据库 alembic check 连接超时；SQLite 全量 754 passed、1 网络测试 skipped。
+- 已保留 [来源报告](RESEARCH_SOURCES.md) 与 [Pilot 阻塞报告](PILOT_DATASET_REPORT.md)，不以合成数据关闭真实 Gate。

@@ -8,7 +8,9 @@ P4-4D1 增加 Research Replay semantics：显式不可变历史记录按固定 c
 
 **真实历史回测尚未完成，不能开始真实三赛季模型优劣结论。** P4-4D2A 已建立独立 research_* 持久化、Raw first、append-only、版本 hash、Seal/Load 与数据库保护，只以本地合成 fixture 验证。真实数据采集、来源证明、覆盖率和导入仍待完成；后续导入必须验证 sporttery_match_id 来自官方体彩历史开售池，ID 非空本身不证明实际开售。
 
-P4-4D2A 使用 Migration `009_research_dataset_persistence`，内部 `jc.research` Core 服务绕开 LIVE ORM 提交钩子；仅 SEALED 数据集可加载为原 ResearchDataset，replay-v1 代码与 analysis_visibility 均未修改。参见 [ADR-014](docs/DECISIONS/ADR-014-research-dataset-persistence.md) 的生命周期、hash、来源核验与失败策略。没有公开研究 API、爬虫或真实三赛季数据，停止于 D2A，不进入 D2B。
+P4-4D2A 使用 Migration `009_research_dataset_persistence`，内部 `jc.research` Core 服务绕开 LIVE ORM 提交钩子；仅 SEALED 数据集可加载为原 ResearchDataset，replay-v1 代码与 analysis_visibility 均未修改。参见 [ADR-014](docs/DECISIONS/ADR-014-research-dataset-persistence.md) 的生命周期、hash、来源核验与失败策略。
+
+P4-4D2B 已进行真实 Source Discovery：2026-09-26～28 官方历史请求返回 HTTP 567；The Odds API 缺密钥、匿名历史请求 401。已保存脱敏 Raw、哈希和 Gate 报告，真实 Target/VERIFIED/SEALED/Replay 均为 0，**Pilot BLOCKED，不适合扩大三赛季**。没有伪造来源或提前实现未验证的历史 Adapter。详见 [来源记录](docs/RESEARCH_SOURCES.md) 与 [Pilot 报告](docs/PILOT_DATASET_REPORT.md)。
 
 **交付状态：可运行的 Mock 演示已打通真实 PostgreSQL；真实当日体彩与海外账号数据、完整 Docker/Redis 运行验收尚未完成。** 详见 [验收报告](docs/PHASE1_ACCEPTANCE.md)。
 

@@ -19,6 +19,7 @@ where = ["apps/api/src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = ["network: real source access, skipped unless RESEARCH_NETWORK_ENABLED=1"]
 [tool.mypy]
 plugins = ["pydantic.mypy"]
 python_version = "3.12"

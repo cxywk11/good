@@ -184,3 +184,127 @@ Inspector 的 `EXPECTED_FROM_JS` 与 `OBSERVED_IN_REAL_RESPONSE` 分离；只报
 Manifest 从本地 summaries/Raw 机器构建，稳定排序并重算 canonical hash；绝不包括正文、HTTP 请求头或凭据。
 早期原件若缺 `text_encoding`，标明 `LEGACY_BYTE_ENCODING_UNVERIFIED`；旧报告中“全部原始字节均可复算”的说法在这些文件上不再成立。
 详见 [当前 Pilot 报告](PILOT_DATASET_REPORT.md) 和 [可提交审计清单](research-probe-manifest.json)。
+
+后续用户反馈项目“立即同步”成功：只读核查到 2026-10-01 北京时间 18:51:13/14 的比赛/赔率
+同步均为 SUCCESS，但关联 Raw 明确为 `mock=true`、`fixture://sporttery.json`，当前配置为演示模式。
+这两次本地 fixture 导入不增加真实数据计数。10:54:01.764998 UTC 按原历史日期参数单次复测官方 API
+仍得 HTTP 567；新增 probe 已进入 manifest，未操纵浏览器或修改访问身份。
+
+## 新浪开奖页实测（2026-10-01，用户提供入口）
+
+入口：[新浪竞彩足球开奖页](https://lotto.sina.cn/open/openDetailJc.d.html?lottId=301&gameTypes=rqspf&date=2026-10-01)。
+普通 HTTPS 返回 200；页面通过公开脚本 `openDetailJc.js` / `chunk-common.js` 查询历史数据。
+未使用账号、Cookie、代理、浏览器自动化或访问控制绕过。
+
+页面脚本明确引用：
+
+```text
+GET https://alpha.lottery.sina.com.cn/gateway/index/entry
+format=json&__caller__=wap&__version__=1.0.0&__verno__=10000
+cat1=jczqMatches&gameTypes=rqspf&date=<date>&isPrized=&isAll=1&dpc=1
+```
+
+另一脚本配置域名 mix 未被额外探测。请求的业务参数均来自上述公开页面代码。
+脚本字段只作线索；以下是 Raw 保存后实际解析出的响应，非 JS 推断：
+
+| 查询日期 | HTTP | result.status | 实际 data 行数 | matchesPrizedCount |
+|---|---|---|---:|---:|
+| 2026-09-26 | 200 | code=0 / success | 24 | 24 |
+| 2026-10-01 | 200 | code=0 / success | 0 | 0 |
+| 2025-09-26 | 200 | code=0 / success | 18 | 18 |
+
+三个响应的 `result.date` 都与查询日期一致。只抽查这三个日期，未批量抓取赛季，未验证连续覆盖或最早日期。
+虽然页面 `dates` 列表本次只列 2026-09-21～2026-10-06，直接使用页面的同一 date 参数仍返回了 2025-09-26 的真实记录。
+2026-10-01 返回空列表只代表该次来源响应，不断言当日实际没有竞彩比赛。
+
+实际结构为 `result.{_timestamp,data,date,dates,gameTypes,isPrized,matchesCount,matchesPrizedCount,status}`。
+行字段观测到：
+
+```text
+matchId, tiCaiId, matchNo, matchNoValue, league, leagueOfficial,
+team1, team2, matchTime, matchTimeFormat,
+score1, score2, halfScore1, halfScore2,
+spf, rqspf, bf, jq, bqc,
+spfPrize, rqspfPrize, bfPrize, jqPrize, bqcPrize,
+spfSellStatus, rqspfSellStatus, bfSellStatus, jqSellStatus, bqcSellStatus,
+showSellStatus, showSellStatusCn
+```
+
+这证明能取得第三方历史比赛、比分及页面展示的五类竞彩 SP / 开奖奖金。
+存在 `tiCaiId` 可作后续官方匹配线索；它仍是新浪声明，不能代替 Sporttery 官方 Raw 认证。
+行中没有双方稳定 team ID、真实 finished_at、逐条赔率 snapshot timestamp 或赔率变动序列。
+`matchTime` / `matchTimeFormat` 是比赛时间字段，不能用于赔率回放。
+2026-09-26 的响应 `_timestamp=1790852576`，换算为 2026-10-01T11:02:56Z，
+与实际 retrieved_at=2026-10-01T11:02:56.172933Z 对齐；它不能证明 9 月 26 日赛前赔率可用。
+不把开奖奖金自动认定为开盘、收盘或 T-30M 快照，不把请求 date 自动认证成官方销售日。
+
+来源决策：**UNVERIFIED**，可作为候选赛果、竞彩 SP 和官方 ID 线索；
+原始数据留存/再分发许可、常规时间结果语义及映射仍待核验。
+本段的 `jczqMatches` 开奖接口不是外部博彩公司历史赔率接口，也不能独立通过 Gate A。
+后续指数页的独立赔率变动接口见下段。没有生成 ResearchMatch、ResearchResult 或 SEALED Dataset。
+
+本地原件位于 `artifacts/research-probes/20261001-sina-discovery/`。
+公共 common JS 含授权模板，首次按既有 guard 标为 WITHHELD；随后单独删除 Bearer 模板文本后重新经过同一 guard，保存为 REDACTED。
+该操作只处理公开响应的本地存储，没有更改请求身份；业务 JSON 原件均为 UNCHANGED，UTF-8 无替换字符。
+响应 SHA-256、canonical sanitized hash、retention 与路径均由 manifest 自动汇总，原始正文不提交 Git。
+
+## 新浪指数与公司赔率变动实测（2026-10-01）
+
+根据用户截图继续检查[比赛指数页](https://lotto.sina.cn/ai/football/match_indicators.d.html?matchId=3867328)。
+`jczqMatches(date=2026-09-30)` 实际返回 2 场，其中 `matchId=3867328`、`tiCaiId=2041789`，
+韩国亚 vs 中国亚、比分 2:1、半场 1:1；来源开球时间为 2026-09-30T14:00:00+08:00。
+与用户截图对应。这里只做单场有界探测，没有扩大赛季。
+
+已保存的页面引用 `footballIndicators.js`，其公司行点击动作调用公开 common JS 中以下接口。
+`EXPECTED_FROM_JS` 仅用于确定请求；下列市场和条数均为 Raw 保存后实际读取的 `OBSERVED_IN_REAL_RESPONSE`。
+
+```text
+GET https://alpha.lottery.sina.com.cn/gateway/index/entry
+format=json&__caller__=wap&__version__=1.0.0&__verno__=10000&dpc=1
+matchId=3867328
+cat1=footballMatchOddsEuro / footballMatchOddsAsia / footballMatchOddsTotals
+
+公司变动明细：cat1 末尾增加 Change，companyId=2&offerId=1
+```
+
+三个概览均为 HTTP 200 / `result.status.code=0`：胜平负 31 行、让球 14 行、总进球 17 行。
+胜平负包含新浪标记的“竞彩官方”和“官方(-1)”行，不能把所有行计为外部公司；这些名称也不能认证体彩官方来源。
+概览实际字段含 `companyId,companyName,offerId,o1Ini,o2Ini,o3Ini,oddsTimeIni,o1New,o2New,o3New,oddsTimeNew`。
+让球/总进球另有盘口显示值 `o3IniStr/o3NewStr`。
+
+选取三个市场共有的同一来源公司 `companyId=2`、显示名 `36*`、`offerId=1`，取得以下真实变动明细：
+
+| 市场 | 实际记录数 | 早于来源开球时间 | 等于或晚于来源开球时间 | 最早时刻（UTC） | 最晚时刻（UTC） |
+|---|---:|---:|---:|---|---|
+| 胜平负 | 12 | 11 | 1 | 2026-09-28T06:46:39Z | 2026-09-30T06:00:11Z |
+| 让球 | 42 | 41 | 1 | 2026-09-28T06:47:05Z | 2026-09-30T06:00:12Z |
+| 总进球 | 49 | 48 | 1 | 2026-09-28T06:47:05Z | 2026-09-30T06:00:12Z |
+
+明细真实字段为 `o1,o2,o3,oddsTime`；让球/总进球另有 `o3Str,o3Cn`。
+胜平负的页面列顺序明确是主胜、平局、客胜；让球/总进球的 `o3` 是盘口，不能套用胜平负三选项映射。
+公司全名未由响应确认，保留来源 ID 和 `36*` 原名，不自行扩写成其他供应商的公司身份。
+
+例如胜平负原始 `oddsTime=1790577999` 对应 2026-09-28T06:46:39Z（北京时间 14:46:39），
+主/平/客为 1.200 / 5.500 / 12.000；最后一条为 1.280 / 4.330 / 13.000，
+`oddsTime=1790748011` 对应来源开球后 11 秒。因此本入口已取得真实带时间的历史外部赔率候选，
+不能继续笼统称为“完全没有历史赔率”或“只有无时刻 opening/closing”。
+
+时间编码有页面代码与真实记录配对证据：`footballIndicators.js` 将 `oddsTime * 1000` 传给
+common JS 的 `new Date()`，显示为“时间”列；这确认页面按 Unix 秒处理，格式化显示使用浏览器本地时区。
+保留完整秒值并换算 UTC，不能从 UI 的 `MM-dd hh:mm` 文本猜年份或固定时区。
+这证明新浪把该值用作赔率变动记录时间；尚不能证明它是上游公司发布、采集或修订的哪一种时刻，
+也没有证明历史记录完整、未追补以及在该时刻已对外可见。`replay_available_at/availability_basis` 仍为 NULL。
+
+进一步质量检查：让球存在 8 个重复时刻、总进球存在 5 个重复时刻；例如让球首个时刻同时出现 -1.25 和 -1.75。
+不能只按时间去重并任取一行，需先确认并行盘口和顺序语义。三个明细最新值均跨过来源开球时间。
+仅按时间排序时，T-30M/T-90M 最近候选都是北京时间 09:54:31（1.20 / 5.00 / 15.00），
+T-360M 最近候选是 06:41:45（1.22 / 5.25 / 12.00）；这些只是候选检索，未证明连续有效性，不计正式 coverage。
+
+来源决策仍为 **UNVERIFIED**：可以继续作外部历史赔率证据复核，正式准入仍需研究使用许可、
+历史可用性时间语义、实体映射及体彩官方 Target。公开响应成功不等于批量使用/再分发许可。
+Gate A 仍缺官方证据；Gate B 不能仅因拿到新浪时间字段自动 PASS。不改 replay v1，不做三赛季采集。
+
+本轮 9 次响应及其 Raw 位于 `artifacts/research-probes/20261001-sina-indicators/`，均为 UNCHANGED；
+明细检查结果另存该目录的 `sina_history_inspection` 本地报告（不另计 probe）。
+manifest 对三个变动响应记录 `SINA_ODDS_HISTORY_OBSERVED_REVIEW_REQUIRED`：仅确认非空成功结构及字段存在，
+不会认证时间有效性、来源许可、公司身份或 Replay。`sina_odds_history_response_count` 是响应份数，不是快照/公司数。

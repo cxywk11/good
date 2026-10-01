@@ -144,6 +144,27 @@ def test_empty_manifest_cannot_claim_a_pilot_attempt():
         blocked_report_section({"records": []})
 
 
+@pytest.mark.parametrize("has_time", [True, False])
+def test_sina_observed_history_is_not_accepted_or_replay_qualified(tmp_path, has_time):
+    row = {"o1": "1.2", "o2": "5.5", "o3": "12"}
+    if has_time:
+        row["oddsTime"] = "1790577999"
+    result = probe(
+        tmp_path,
+        body=json.dumps({"result": {"status": {"code": 0, "msg": "success"}, "data": [row]}}),
+        url="https://alpha.lottery.sina.com.cn/gateway/index/entry"
+        "?cat1=footballMatchOddsEuroChange&matchId=synthetic&companyId=2&offerId=1",
+    )
+    official = probe(tmp_path, "official", "captcha", 567, "https://webapi.sporttery.cn/history")
+    manifest = build_probe_manifest([result["probe_path"], official["probe_path"]], root=tmp_path)
+    counts = manifest_counts(manifest)
+    assert counts["sina_odds_history_response_count"] == int(has_time)
+    assert counts["accepted_source_count"] == counts["official_json_count"] == 0
+    section = blocked_report_section(manifest)
+    assert "| replay-qualified external historical odds | 0 |" in section
+    assert "| Market replay evaluable | 0 |" in section
+
+
 def test_committed_manifest_and_pilot_report_numbers_match():
     # No local Raw and no network needed on CI. The bounded section is reproducible
     # from the committed allowlisted manifest alone, including all zero/pass claims.

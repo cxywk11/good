@@ -51,6 +51,27 @@ def _inspect(raw: ResearchRawArtifactInput) -> tuple[str, str]:
             retrieved_at=raw.retrieved_at,
         )
         return report["schema_status"], report["evidence_decision"]
+    if parts.hostname == "alpha.lottery.sina.com.cn" and parts.path == "/gateway/index/entry":
+        query = parse_qs(parts.query)
+        if query.get("cat1") in (
+            ["footballMatchOddsEuroChange"],
+            ["footballMatchOddsAsiaChange"],
+            ["footballMatchOddsTotalsChange"],
+        ) and all(len(query.get(key, [])) == 1 for key in ("matchId", "companyId", "offerId")):
+            try:
+                payload = json.loads(raw.payload)
+            except ValueError:
+                payload = None
+            result = payload.get("result") if isinstance(payload, dict) else None
+            if isinstance(result, dict) and result.get("status") == {"code": 0, "msg": "success"}:
+                rows = result.get("data")
+                if isinstance(rows, list) and rows and all(
+                    isinstance(row, dict) and {"o1", "o2", "o3", "oddsTime"} <= row.keys()
+                    for row in rows
+                ):
+                    # Field presence only: no license, time semantics, official
+                    # target, bookmaker mapping or replay eligibility is certified.
+                    return "SINA_ODDS_HISTORY_OBSERVED_REVIEW_REQUIRED", "UNVERIFIED"
     # Documentation and alternative-source discovery cannot certify real data.
     return "UNVERIFIED", "UNVERIFIED"
 
@@ -152,6 +173,9 @@ def manifest_counts(manifest: dict) -> dict:
         "historical_envelope_count": sum(
             r["schema_status"] == "HISTORICAL_ENVELOPE_OBSERVED" for r in records
         ),
+        "sina_odds_history_response_count": sum(
+            r["schema_status"] == "SINA_ODDS_HISTORY_OBSERVED_REVIEW_REQUIRED" for r in records
+        ),
         "accepted_source_count": len({r["source"] for r in records if r["evidence_decision"] == "ACCEPTED"}),
     }
 
@@ -167,18 +191,18 @@ def blocked_report_section(manifest: dict) -> str:
         "<!-- BEGIN MACHINE PROBE STATUS -->",
         "## P4-4D2B.1 机器核验",
         "",
-        "由 `python -m jc.research.probe_manifest` 与 manifest 同次生成；仅报告尚无真实数据的分支。",
+        "由 `python -m jc.research.probe_manifest` 与 manifest 同次生成；仅报告尚无已核验官方 Target 或外部历史快照的分支。",
         "",
         "| 项目 | 数量 / 状态 |",
         "|---|---|",
         *[f"| {key} | {value} |" for key, value in counts.items()],
         "| VERIFIED Sporttery Target | 0 |",
-        "| external historical odds | 0 |",
+        "| replay-qualified external historical odds | 0 |",
         "| T-30M / T-90M / T-360M coverage | 0 / 0 / 0 |",
         "| Market replay evaluable | 0 |",
         "| SEALED Pilot / Dataset hash | 无 / 无 |",
         "| Gate A：官方 Target | BLOCKED：没有已复核官方目标比赛 |",
-        "| Gate B：外部历史赔率 | BLOCKED：没有匹配目标的完整 1X2 与快照时间 |",
+        "| Gate B：外部历史赔率 | BLOCKED：没有匹配已核验官方目标且通过来源/时间准入的完整 1X2 |",
         "| Gate C：常规时间赛果 | BLOCKED：没有目标赛果证据 |",
         "| Gate D：稳定实体 | BLOCKED：没有已核验映射 |",
         "| Gate E：SEALED | BLOCKED：没有实际 ResearchImport |",

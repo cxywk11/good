@@ -61,8 +61,11 @@ UI 交叉核验依据真实 HTML 中的渲染模板及用户提供的显示值�
 本次所有秒值均为 `00`，不能由格式推断供应商具有秒级采样精度。
 页面模板用 `updateTime.slice(5,-3)` 显示 `09-30 13:27`，没有时区转换。
 
-接口未附时区。候选计算显式采用用户指定的 `Asia/Shanghai`，得到候选 `parsed_utc=2026-09-30T05:27:00Z`。
-比赛详情的 `matchTime/liveTime` 支持同为北京时间的推断，但不能证明每条赔率时间的时区约定。
+接口未附时区。根据本次比赛 detail 中 `matchTime=2026-09-30 14:00:00` 与
+`liveTime=2026-09-30T06:00:00Z` 的 +08 对齐关系，以及页面模板直接展示 `updateTime` 的行为，
+暂以 `Asia/Shanghai` 作为候选解析假设。该假设仅用于 candidate cutoff 计算；
+VIPC `updateTime` 自身的正式时区及 availability 语义尚未由来源文档确认。
+例如上述原始时刻得到候选 `parsed_utc=2026-09-30T05:27:00Z`。
 因此 `timezone=NULL`、`candidate_timezone=Asia/Shanghai`、`timezone_status=ASSUMED_FOR_CANDIDATE_ONLY`。
 下面所有赛前计数和候选 UTC 均受这个假设约束，不是正式可用性时间。
 
@@ -109,16 +112,28 @@ VIPC 可作为有条件的第二候选源：身份和 1X2 历史结构可取，�
 命令不联网，先复用 manifest 的原件哈希/secret/provenance 校验，再读取三份固定 URL 的业务 Raw，
 生成本地逐行检查及下方统计。它不是正式 Provider，不改 D2A、research-replay-v1 或 LIVE。
 
-本轮检查：VIPC inspector、probe manifest、research pilot 相关测试 **60 passed**；
-修改文件 Ruff 通过，Mypy 检查 2 个 source files 通过，`git diff --check` 通过。
+验收收尾（2026-10-01）：仅修正时区依据措辞并离线核验，未发送新的 VIPC 网络请求。
+
+| 完整回归 | 结果 |
+|---|---|
+| `pytest -q`（SQLite） | **857 passed、1 skipped**，138.28 秒 |
+| `ruff check apps/api/src tests` | 通过 |
+| `mypy apps/api/src` | 通过，50 个 source files |
+| `pytest -q`（PostgreSQL） | **857 passed、1 skipped**，135.89 秒；PostgreSQL 17.11，127.0.0.1:55433，新建空库 `jc_vipc_acceptance_test` |
+
+两套全量均显式设置 `RESEARCH_NETWORK_ENABLED=0`；唯一跳过项为 opt-in 真实网络测试，
+各保留 1 条既有 Starlette/httpx 弃用警告。PG 测试结束后仅余空的 `alembic_version` 表。
+日志保存在 ignored `artifacts/vipc-acceptance-sqlite-tests.txt`、`artifacts/vipc-acceptance-postgres-tests.txt`。
+回归前后离线复核：下表全部统计、三个 candidate 及状态字段一致，23 个已保存文件的 SHA-256 均未变化。
+`git diff --check` 通过；冻结模块无 diff。未新增功能、采集或准入结论。
 测试使用明确的 synthetic 输入，默认不联网；真实统计仅来自本地已保存 Raw。
 覆盖身份变化、offerId 缺失、display_name 不参与身份、Decimal/非法赔率、原始时间与 UI 显示、
 开球前/等于/以后、含等号的三个 cutoff、不同时间同价格保留、重复与冲突时刻、返还率和 A/B 不自动通过。
-另验证离线读取绑定三个固定 URL、原件篡改被拒绝。没有为此重跑或宣称通过全量应用测试。
+另验证离线读取绑定三个固定 URL、原件篡改被拒绝。
 
 <!-- BEGIN VIPC CANDIDATES -->
 
-以下由已保存 Raw 离线计算；时区仅按用户指定 Asia/Shanghai 作候选假设。
+以下由已保存 Raw 离线计算；依据 detail 的 +08 对齐关系及页面直显 updateTime，暂以 Asia/Shanghai 作为仅用于 candidate cutoff 的解析假设；正式时区及 availability 语义未确认。
 
 | 检查项 | 结果 |
 |---|---|

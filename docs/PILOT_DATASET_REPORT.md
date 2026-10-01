@@ -49,11 +49,17 @@
 身份、API→JS→UI 字段对应、时间原值、候选截点及逐项结果见 [VIPC_SOURCE_REPORT](VIPC_SOURCE_REPORT.md)。
 其机器统计与 candidate 由 `jc.research.vipc_evidence` 从已保存原件生成，不手工维护第二套行数。
 
-`updateTime` 不带时区；候选按用户指定的 Asia/Shanghai 计算，`replay_available_at` 保持 NULL。
+`updateTime` 不带时区；根据 detail 中 `matchTime=2026-09-30 14:00:00` 与
+`liveTime=2026-09-30T06:00:00Z` 的 +08 对齐关系及页面模板直接展示 `updateTime` 的行为，
+暂以 `Asia/Shanghai` 作为仅用于 candidate cutoff 的解析假设；正式时区及 availability 语义未由来源文档确认。
+`timezone=NULL`、`candidate_timezone=Asia/Shanghai`、`timezone_status=ASSUMED_FOR_CANDIDATE_ONLY`，
+`replay_available_at/availability_basis` 均保持 NULL。
 robots 明确排除 `/i/*`，许可为 RESTRICTED；发现后已停止网络取数。
 VIPC source decision 为 UNVERIFIED，Gate A/B 仍 BLOCKED，没有 Replay、SEALED 或规模扩展。
 累计 manifest 新增 `vipc_1x2_history_response_count`，只数观测响应，不认证快照或 Gate。
-本次 VIPC / manifest / pilot 专项 **60 passed**；修改文件 Ruff、Mypy 和 diff 检查通过。
+验收收尾已重跑 SQLite 与 PostgreSQL 全量：各 **857 passed、1 skipped**（跳过 opt-in 真实网络测试）；
+`ruff check apps/api/src tests`、`mypy apps/api/src`（50 个 source files）及 `git diff --check` 均通过。
+全部指定统计、三个 candidate 及已保存文件哈希在回归前后保持一致；详见 [验收记录](VIPC_SOURCE_REPORT.md#离线复核)。
 
 ## 可复现入口
 

@@ -1,7 +1,8 @@
 """Offline, single-match VIPC 1X2 evidence inspection; never a Replay importer.
 
-The observed API has naive wall times. Asia/Shanghai is the user's explicit
-candidate assumption, not a certified provider timezone or availability claim.
+The observed API has naive wall times. Detail's +08 alignment and the UI's direct
+updateTime display support Asia/Shanghai only as a candidate cutoff assumption;
+the provider timezone and availability semantics remain unconfirmed.
 """
 
 import argparse
@@ -236,7 +237,8 @@ def report_section(report: dict) -> str:
     lines = [
         "<!-- BEGIN VIPC CANDIDATES -->",
         "",
-        "以下由已保存 Raw 离线计算；时区仅按用户指定 Asia/Shanghai 作候选假设。",
+        "以下由已保存 Raw 离线计算；依据 detail 的 +08 对齐关系及页面直显 updateTime，"
+        "暂以 Asia/Shanghai 作为仅用于 candidate cutoff 的解析假设；正式时区及 availability 语义未确认。",
         "",
         "| 检查项 | 结果 |",
         "|---|---|",

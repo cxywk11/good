@@ -42,6 +42,19 @@
 正式 coverage 仍为 0；机器表的 `replay-qualified external historical odds` 明确只计通过 Replay 准入的数据。
 `historical_envelope_count` 仅指 The Odds API envelope；新浪三个真实变动响应单独机器计数，详见 [来源实测](RESEARCH_SOURCES.md)。
 
+## VIPC 单场证据核验（2026-10-01）
+
+固定 `matchId=498257749`、公司 `432`（显示名香港**）、1X2 历史，已取得详情、公司列表、
+公司历史三份真实业务 JSON。全部先保存 Raw，再离线检查。
+身份、API→JS→UI 字段对应、时间原值、候选截点及逐项结果见 [VIPC_SOURCE_REPORT](VIPC_SOURCE_REPORT.md)。
+其机器统计与 candidate 由 `jc.research.vipc_evidence` 从已保存原件生成，不手工维护第二套行数。
+
+`updateTime` 不带时区；候选按用户指定的 Asia/Shanghai 计算，`replay_available_at` 保持 NULL。
+robots 明确排除 `/i/*`，许可为 RESTRICTED；发现后已停止网络取数。
+VIPC source decision 为 UNVERIFIED，Gate A/B 仍 BLOCKED，没有 Replay、SEALED 或规模扩展。
+累计 manifest 新增 `vipc_1x2_history_response_count`，只数观测响应，不认证快照或 Gate。
+本次 VIPC / manifest / pilot 专项 **60 passed**；修改文件 Ruff、Mypy 和 diff 检查通过。
+
 ## 可复现入口
 
 用户通过正常浏览器保存单个响应后执行（时间必须是实际采集时间并含时区）：
@@ -65,7 +78,7 @@ Inspector 不生成 VERIFIED。后续只有实际 Raw、池成员身份、双方
 [research-probe-manifest.json](research-probe-manifest.json) 是机器生成的累计记录，包括原 D2B 和本轮。仅含来源、公用 URL、UTC、HTTP status、原响应 SHA-256、canonical sanitized Raw hash、retention、schema/scan 状态、本地相对路径与 evidence decision；没有正文或凭据。
 
 ```powershell
-.venv/Scripts/python.exe -m jc.research.probe_manifest --input artifacts/research-probes/20261001-discovery artifacts/research-probes/20261001-unblock artifacts/research-probes/20261001T105401Z-user-access-check artifacts/research-probes/20261001-sina-discovery artifacts/research-probes/20261001-sina-indicators --blocked-report docs/PILOT_DATASET_REPORT.md
+.venv/Scripts/python.exe -m jc.research.probe_manifest --input artifacts/research-probes/20261001-discovery artifacts/research-probes/20261001-unblock artifacts/research-probes/20261001T105401Z-user-access-check artifacts/research-probes/20261001-sina-discovery artifacts/research-probes/20261001-sina-indicators artifacts/research-probes/20261001-vipc-discovery --blocked-report docs/PILOT_DATASET_REPORT.md
 ```
 
 构建时重新检查 D2A secret guard、canonical hash、summary/Raw 一致性、路径边界；有编码且 UNCHANGED 的原件重算响应字节 SHA-256。早期 D2B 少数 Raw 缺编码元数据，明确记为 `LEGACY_BYTE_ENCODING_UNVERIFIED`，不补造编码、不宣称原字节复核成功。脱敏/withheld 原件不能成为已接受数据源。
@@ -106,12 +119,13 @@ closing/opening 无时刻时三个 cutoff 均为零、A/B 独立、manifest 无�
 
 | 项目 | 数量 / 状态 |
 |---|---|
-| probe_count | 49 |
-| response_raw_count | 47 |
+| probe_count | 60 |
+| response_raw_count | 58 |
 | no_response_count | 2 |
 | official_json_count | 0 |
 | historical_envelope_count | 0 |
 | sina_odds_history_response_count | 3 |
+| vipc_1x2_history_response_count | 1 |
 | accepted_source_count | 0 |
 | VERIFIED Sporttery Target | 0 |
 | replay-qualified external historical odds | 0 |

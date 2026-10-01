@@ -72,6 +72,20 @@ def _inspect(raw: ResearchRawArtifactInput) -> tuple[str, str]:
                     # Field presence only: no license, time semantics, official
                     # target, bookmaker mapping or replay eligibility is certified.
                     return "SINA_ODDS_HISTORY_OBSERVED_REVIEW_REQUIRED", "UNVERIFIED"
+    if parts.hostname == "www.vipc.cn":
+        match = re.fullmatch(r"/i/match/football/(\d+)/odds/euro/(\d+)", parts.path)
+        if match:
+            try:
+                payload = json.loads(raw.payload)
+            except ValueError:
+                payload = None
+            if isinstance(payload, dict) and payload.get("companyId") == match[2]:
+                rows = payload.get("list")
+                if isinstance(rows, list) and rows and all(
+                    isinstance(row, dict) and {"updateTime", "odds", "returnRatio"} <= row.keys()
+                    for row in rows
+                ):
+                    return "VIPC_1X2_HISTORY_OBSERVED_REVIEW_REQUIRED", "UNVERIFIED"
     # Documentation and alternative-source discovery cannot certify real data.
     return "UNVERIFIED", "UNVERIFIED"
 
@@ -175,6 +189,9 @@ def manifest_counts(manifest: dict) -> dict:
         ),
         "sina_odds_history_response_count": sum(
             r["schema_status"] == "SINA_ODDS_HISTORY_OBSERVED_REVIEW_REQUIRED" for r in records
+        ),
+        "vipc_1x2_history_response_count": sum(
+            r["schema_status"] == "VIPC_1X2_HISTORY_OBSERVED_REVIEW_REQUIRED" for r in records
         ),
         "accepted_source_count": len({r["source"] for r in records if r["evidence_decision"] == "ACCEPTED"}),
     }

@@ -180,3 +180,17 @@ def test_committed_manifest_and_pilot_report_numbers_match():
         assert record["secret_scan"] == "PASS"
         reject_secrets({k: v for k, v in record.items() if k != "secret_scan"})
         assert not Path(record["local_artifact_relative_path"]).is_absolute()
+
+
+@pytest.mark.parametrize("company", ["432", "other"])
+def test_vipc_history_manifest_observation_never_certifies_gates(tmp_path, company):
+    result = probe(
+        tmp_path,
+        body=json.dumps({"companyId": company, "list": [{
+            "updateTime": "2026-09-30 13:27:00", "odds": ["1.2", "5", "9"], "returnRatio": "87%",
+        }]}),
+        url="https://www.vipc.cn/i/match/football/498257749/odds/euro/432",
+    )
+    manifest = build_probe_manifest([result["probe_path"]], root=tmp_path)
+    assert manifest_counts(manifest)["vipc_1x2_history_response_count"] == int(company == "432")
+    assert manifest["records"][0]["evidence_decision"] == "UNVERIFIED"

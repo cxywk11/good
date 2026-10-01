@@ -2,6 +2,7 @@
 
 > P4-4D2B.1 更新见末尾。本文件前半保留原 D2B 探测事实；当前数字与 Gate 状态以
 > `research-probe-manifest.json` 及 `PILOT_DATASET_REPORT.md` 的机器表为准。
+> VIPC 单场、单公司 1X2 核验见 [VIPC_SOURCE_REPORT.md](VIPC_SOURCE_REPORT.md)：已取得带完整日期的原始赔率列表，但时间语义与许可未通过准入。
 
 核验日期：2026-10-01。实际本机 HTTP 探测窗口：09:46:11～09:56:23 UTC。
 本轮候选历史窗口为 2026-09-26～28，未取得官方销售日成员证据。

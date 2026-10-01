@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-已交付 P4-0～P4-3；P4-3 Market Probability Baseline 规范见文末，前文保留 P4-0～P4-2 的基础设施与历史验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付 P4-0～P4-3 与 P4-4A Score Probability Mathematics；当前数学层规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -247,3 +247,77 @@ API 先调用原有 get_or_create_snapshot，再传 Feature ID 给 Market 服务
 P4-3 文件清单（14 个）：修改 README.md、analysis/contracts.py、api.py、models.py、docs/ARCHITECTURE.md、BACKLOG.md、CONSTITUTION.md、DATA_MODEL.md、PHASE4_SPEC.md；新增 analysis/market.py、analysis/market_snapshots.py、migrations/versions/008_market_probability.py、tests/test_market_model.py、docs/DECISIONS/ADR-009-market-probability-baseline.md。Python 源码相对根均为 apps/api/src/jc。
 
 真实 Provider、Docker/Redis 验收仍未完成。下一阶段只建议先评审本阶段和真实数据 Gate，再单独授权 P4-4；本轮没有实施 P4-4。
+
+## P4-4A Score Probability Mathematics
+
+P4-3 经人工复核后，本阶段实现 `analysis/score_matrix.py`，唯一目标是把显式、正确的进球参数稳定转换为同一概率空间中的比分和各玩法分布。**当前仍不能产生真实比赛预测**：lambda_home、lambda_away、rho 的真实估计来源均未建立；没有默认参数、球队强度模型、训练或上游数据读取。
+
+引擎为纯函数，仅依赖标准库，不访问数据库、Feature/Odds/Market Snapshot、网络、当前时间、随机数或 LLM。没有新表、Migration、公开预测 API 或前端页面。现有 Raw-first、体彩主比赛池、append-only、FeatureSnapshot 边界、analysis_cutoff、analysis_visibility 与 Market 不回查当前 Odds 的规则保持。
+
+### 调用和结果
+
+```python
+from decimal import Decimal
+from jc.analysis.score_matrix import build_score_matrix, three_way_handicap, top_scores
+
+# 仅为可人工核验的数学 Golden Case，不代表任何比赛或默认模型参数。
+result = build_score_matrix(
+    lambda_home=Decimal("2"),
+    lambda_away=Decimal("1"),
+    rho=Decimal("0"),
+    lines=[-2, -1, 0, 1, 2],
+)
+assert three_way_handicap(result["matrix"], 0) == result["one_x_two"]
+display_scores = top_scores(result, 3)
+```
+
+三项参数均为必填有限 Decimal，lambda≥0；不自动转换字符串、整数或 float。lines 可省略，仅接受 Python int（不含 bool）；先去重再数值升序，原对象不变。相同输入、任意关键词及 lines 顺序、外部 Decimal Context 下输出一致。
+
+`ScoreMatrixResult` 的矩阵为 `matrix[home_goals][away_goals]` 二维数组，完整保留动态范围内的格子和零概率。输出包括 engine_version、三项参数、max_home_goals/max_away_goals、tail_upper_bound、pre_normalization_mass、normalization_factor、matrix、one_x_two、total_goals、sporttery_ttg、handicap。除进球范围整数外，参数、概率和数值元数据均为 Decimal 字符串，无 float；完整字段定义见 [ADR-010](DECISIONS/ADR-010-score-probability-math.md)。
+
+### 固定数学规则
+
+| 规则 | score-math-v1 |
+| --- | --- |
+| 精度 | 矩阵/归一化/聚合 50 位有效数字，ROUND_HALF_EVEN，独立 Context；tau 符号验证保留输入乘积系数所需额外精度 |
+| Poisson | p0=Decimal.exp(-lambda)，p(k+1)=p(k)×lambda/(k+1) |
+| 动态范围 | 两侧独立扩展，至少保留 0、1 球；每侧保守尾部界≤1e-12；最大 30 球 |
+| 尾部上界 | p(K+1)/(1-lambda/(K+2))+1e-45，要求 lambda<K+2；零 lambda 精确为 0；联合界为两侧界之和，至多 2e-12 |
+| 超限 | cap 内无法满足容差抛 TailToleranceError，禁止静默截断；如 lambda=8 失败 |
+| Dixon–Coles | tau00=1-h×a×rho，tau01=1+h×rho，tau10=1+a×rho，tau11=1-rho，其他为 1 |
+| rho | 必须显式给出，rho=0 为独立 Poisson；任何负 tau 拒绝，tau=0 合法，不修改 rho |
+| 归一化 | 记录 DC 后有限矩阵质量 M，每格统一乘 1/M；没有残差桶；和误差≤1e-45 |
+| 编码 | 直接 str(Decimal)，保留全部计算精度，可含科学计数法，不强制小数位数 |
+| 版本变化 | Poisson、DC、截断、归一化、精度/容差或映射变化必须升级 SCORE_ENGINE_VERSION |
+
+至少保留整个 DC 四格块，使修正质量 -c/+c/+c/-c 相互抵消，避免很小 lambda 过早截断造成不一致。50 位 Context 外的极端数值范围失败显式暴露，不生成伪造分布。
+
+1X2 复用 `three_way_handicap(matrix,0)`；HHAD 按 `home_goals+line` 与 away_goals 比较后求和，HHAD(0) 与 1X2 严格一致。total_goals 按 i+j 聚合到 0～max_home_goals+max_away_goals；TTG 0～6 按对应格求和，7+ 实际累加 i+j≥7 的所有矩阵格。各分布均源自归一化矩阵，总和在 Decimal 容差内为 1。top_scores 只排序展示，顺序为概率降序、主进球升序、客进球升序。
+
+本阶段不处理亚洲盘结算（quarter line/push/half win/half loss）、竞彩比分 HOME_OTHER/DRAW_OTHER/AWAY_OTHER，不输出 P_model/P_final、confidence、推荐、Edge 或 EV，也不保存任意 lambda 为正式预测。真实参数来源、时间拆分验证方案与缺失处理待数学层复核后的 P4-4B，当前停止于 P4-4A。
+
+### P4-4A 验证
+
+新增 `tests/test_score_matrix.py`，覆盖 33 项要求及高精度 tau 边界：Poisson P0/递推/直接 factorial Golden Cases、尾部界、动态范围与 cap、非法输入、零/单侧零 lambda、独立 Poisson 和四格 DC、归一化元数据、对称性、1X2/TTG/HHAD 一致性、Top Score 排序、Context 隔离、输入不变、确定性和无 float JSON 输出。
+
+Golden Cases 使用 lambda=(1,1)/(2,1)、rho=0，独立 80 位 Decimal + factorial 公式核验明确比分概率，并分别检查归一化因子与有限矩阵尾部误差。没有 Monte Carlo 或生产随机模拟。
+
+最终实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 新增数学测试 | 84 项通过；原 179 项 + 新增 84 项 = 263 项 |
+| SQLite 全量 pytest | 263 passed，71.13 秒 |
+| PostgreSQL 全量 pytest | PostgreSQL 17.11，独立 127.0.0.1:55433 空库 jc_score_test：263 passed，75.44 秒 |
+| 旧模块回归 | test_features.py / test_market_model.py / test_odds.py / test_results.py 全部纳入两套全量测试，原测试未修改 |
+| 生产 Schema | 全量集成测试中的 upgrade/check/downgrade 通过；没有新增表或 Migration，未修改旧 001～008 |
+| Ruff | 标准 apps/api/src、tests 范围通过；新文件 format --check 通过 |
+| 扩展历史 lint | 额外对 migrations 检查发现 6 个既有问题，记录 BACKLOG；未改旧迁移或压制规则 |
+| mypy | 35 个源文件通过 |
+| 前端 | 源码/API 均未修改；本轮未重跑前端 test/build，没有接入预测展示 |
+
+两套 pytest 均保留原有 1 条 Starlette/httpx 弃用警告，无失败、无跳过。日志在本机 `artifacts/score-sqlite-tests.txt`、`artifacts/score-postgres-tests.txt`（Git 忽略）。使用已有独立测试实例和新空测试库完成 PG 验证，完成后已正常停止该测试实例；没有修改或迁移演示业务库。真实数据源、Docker/Redis、依赖锁、可见性扫描性能等既有技术债不因此关闭。
+
+本轮文件清单共 8 个：新增 `apps/api/src/jc/analysis/score_matrix.py`、`tests/test_score_matrix.py`、`docs/DECISIONS/ADR-010-score-probability-math.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`，并同步 `README.md`、`docs/CONSTITUTION.md` 的当前阶段声明。没有新建 score_contracts.py 或其他空模块。
+
+P4-4B 建议先评审冻结 Feature 的真实历史覆盖、参数来源与缺失规则，再定义球队强度/λ/rho 的可复现估计和按时间拆分验证。当前没有实施 P4-4B，等待数学层人工复核。

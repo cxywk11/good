@@ -64,3 +64,15 @@ Raw / Odds → 原有 Feature 构建器 @ analysis_cutoff → 不可变 FeatureS
 Market 服务只按 ID 读取一个 FeatureSnapshot，并按 `(feature_snapshot_id, market_model_version)` 查找或追加结果；不查询赔率、当前比赛、比赛版本、Provider 状态或 API。复用 odds.py 的通用 INSERT 去重 helper，该 helper 不查询赔率。API 先调用原有 Feature 服务，再调用 Market 服务；原有 ORM after_commit 可见性扫描不变，Market 不增加历史扫描。
 
 V1 每个 `(provider, bookmaker)` 独立验证完整性、proportional 去水，外部完整 1X2 等权形成 `P_market`。体彩完全排除于外部共识，只输出自身定价及与外部均值之差。亚洲二项盘口和体彩 HHAD 三项、TOTALS 和体彩 TTG 八项各自独立；不做概率空间转换。无预测、推荐或 EV。详见 [ADR-009](DECISIONS/ADR-009-market-probability-baseline.md)。
+
+P4-4A 增加单个标准库模块 `analysis/score_matrix.py`，边界独立于数据读取与持久化：
+
+```text
+显式 Decimal lambda_home / lambda_away / rho
+                    ↓
+score-math-v1：动态 Poisson 边缘 → DC 四格修正 → 统一归一化矩阵
+                    ↓
+        1X2 / 整数 HHAD / 总进球 / 体彩 TTG
+```
+
+仅为纯数学转换器；不读取 Feature/Odds/Market Snapshot、DB、网络或时钟，不估计参数，不创建预测表/API，也不接入前端。50 位 Decimal、每侧尾部界 1e-12、最高 30 球；不足则显式失败，保留截断与归一化元数据。所有派生概率来自同一矩阵，JSON 核心概率为字符串。详见 [ADR-010](DECISIONS/ADR-010-score-probability-math.md)。未来 P4-4B 参数估计仍须消费截止时刻冻结的 FeatureSnapshot；当前尚不能产生真实比赛预测。

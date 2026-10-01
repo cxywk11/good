@@ -1,6 +1,6 @@
 # 竞彩智研 / JC Football Intelligence
 
-Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追加赔率、审核后台和历史曲线。已增加 Phase 4 的 P4-0～P4-3：赛后事实 Contract、不可变 Feature Snapshot、严格 cutoff 基础设施和仅消费冻结 Feature 的 Market Probability Baseline。没有最终预测模型或投注推荐。
+Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追加赔率、审核后台和历史曲线。已增加 Phase 4 的 P4-0～P4-3：赛后事实 Contract、不可变 Feature Snapshot、严格 cutoff 基础设施和仅消费冻结 Feature 的 Market Probability Baseline；P4-4A 增加显式 Decimal 参数的纯比分概率数学层。真实 lambda/rho 估计尚未实现，不能产生真实比赛预测，没有投注推荐。
 
 **交付状态：可运行的 Mock 演示已打通真实 PostgreSQL；真实当日体彩与海外账号数据、完整 Docker/Redis 运行验收尚未完成。** 详见 [验收报告](docs/PHASE1_ACCEPTANCE.md)。
 

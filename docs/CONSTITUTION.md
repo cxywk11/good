@@ -24,7 +24,9 @@
 22. 历史 Feature 只能消费截止时刻已可见的不可变证据。供应商发布时间、生效时间、采集时间不能代替系统可见时间；后补数据和晚提交事务不能反向进入历史输入。
 23. Feature、赛果、赛后统计和可见性凭据不得 UPDATE/DELETE；纠错追加事实或升级版本。PostgreSQL 是生产 Schema 基准，SQLite 快测不能代替 PostgreSQL 验证。
 24. Goals-only Football Baseline 只能消费冻结 Feature 的目标实体 ID 与历史赛果，不读取赔率或 xG、不查询当前状态；跨源冲突整场排除，样本不足不得使用默认 lambda。规则变化必须升级估计器版本；基线概率不等于最终预测或推荐。
+25. Model Evaluation 仅消费冻结不可变样本，使用版本固定的 Decimal 指标、校准桶及排除规则；不得重归一错误概率、静默重复计数、猜测 coverage 分母或输出 winner。跨模型配对必须按共同 match_id 比较，不能用不同样本集的 aggregate 差替代。
+26. FROZEN_SAMPLE_SET 只说明评估输入已固定，不构成无泄漏或线上可见证明。未来 LIVE_AS_OBSERVED 与 RESEARCH_REPLAY 必须严格分开；导入旧赛季数据不得生成过去的 live-visible FeatureSnapshot，不得用 provider published_at 或其他推测时间伪造 analysis_visibility。
 
 历史 Phase 0–3 禁止预测、P_model / P_final、BUY / WATCH / PASS、投注金额、串关、实时比分、滚球、自动投注，该约束保留为历史范围记录。
-当前已授权 P4-0～P4-3 文档、赛后事实、Feature 基础设施和仅消费冻结 Feature 的市场定价基准，以及 P4-4A 显式参数的纯比分概率数学层、P4-4B1 冻结赛果的 Goals Baseline Lambda Estimator；Market Snapshot 同样数据库级 append-only。P4-4B1 每队最近 20 场、至少 5 场、等权计算 GF/GA 与 lambda，rho 固定 0；不增加模型持久化或预测 API。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；xG、Elo、rho 拟合、Model Snapshot、Ensemble 等后续能力等待复核和另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
+当前已授权 P4-0～P4-3 文档、赛后事实、Feature 基础设施和仅消费冻结 Feature 的市场定价基准，以及 P4-4A 显式参数的纯比分概率数学层、P4-4B1 冻结赛果的 Goals Baseline Lambda Estimator；Market Snapshot 同样数据库级 append-only。P4-4B1 每队最近 20 场、至少 5 场、等权计算 GF/GA 与 lambda，rho 固定 0；不增加模型持久化或预测 API。P4-4C 增加纯 Model Evaluation Core，只做冻结样本的 Log Loss、Brier、Accuracy、Calibration/ECE、coverage、配对比较与时间划分契约，不进行真实历史研究或模型训练。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；Research Replay、xG、Elo、rho 拟合、Model Snapshot、Ensemble 等后续能力等待复核和另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
 演示样例必须包含 mock=true，生产环境不允许启用演示。

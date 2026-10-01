@@ -1,6 +1,6 @@
 # 待办与技术债
 
-本文件不授权扩大本阶段范围。2026-10-01 已授权并完成 P4-0～P4-3、P4-4A 比分概率数学层及 P4-4B1 Goals-only Football Baseline；P4-4B1 等待人工复核，后续模型与功能等待明确指令。
+本文件不授权扩大本阶段范围。2026-10-01 P4-0～P4-3、P4-4A 比分概率数学层及 P4-4B1 Goals-only Football Baseline 已经人工复核；P4-4C Model Evaluation Core 已实施，待人工复核。后续模型与功能等待明确指令。
 
 ## 当前阶段验收阻塞
 
@@ -22,7 +22,7 @@
 
 ## 下一阶段开始前
 
-先关闭全部数据验收 Gate，再建立真实数据的人工核验集和连续采集观察期。核验来源覆盖、延迟、缺失、映射准确率、时间泄漏与备份可恢复性，形成通过标准。不要在 Mock 或未确认映射上开展模型评估；当前实现 Feature、Market Baseline、比分数学转换与 Goals-only Football Baseline，不实现 AI 分析。
+先关闭全部数据验收 Gate，再建立真实数据的人工核验集和连续采集观察期。核验来源覆盖、延迟、缺失、映射准确率、时间泄漏与备份可恢复性，形成通过标准。Mock 仅可用于评估数学 Golden Case，不得将 Mock 或未确认映射的结果作为真实模型质量结论；当前实现 Feature、Market Baseline、比分数学转换、Goals-only Football Baseline 与纯 Evaluation Core，不实现 AI 分析。
 
 ## Phase 4 审查发现及后续债务
 
@@ -52,10 +52,18 @@
 
 ## P4-4B1 后续债务（不在本轮实施）
 
-- goals-baseline-v1 已实现最近 20 场 / 最少 5 场 / 等权 / 无 prior 的赛果基准，等待人工复核。当前只有体彩池历史，不保证球队完整赛程；有效样本不足必须保持 INSUFFICIENT_DATA。
+- goals-baseline-v1 已实现最近 20 场 / 最少 5 场 / 等权 / 无 prior 的赛果基准，已人工复核。当前只有体彩池历史，不保证球队完整赛程；有效样本不足必须保持 INSUFFICIENT_DATA。
 - 多来源同比分仅计一次，冲突整场排除；无效同 ID 证据也保守排除整场。一致比分的来源采用最早 finished_at 排序。正式 Result Resolution、历史覆盖校验、来源终场时间一致性仍待独立设计，不能静默改变 v1。
-- 真实历史的按时间拆分回测、模型质量指标与发布工件归档尚未实施。没有证明此基准能胜过 Market；不能称为最终真实比赛预测。
-- xG、Elo、自动 rho 拟合、ML、Calibration、Ensemble、Model Snapshot、预测 API 与推荐保持未实施；后续任何样本/权重/公式/精度/rho 变化须升级版本并另行授权。
+- P4-4C 已补充概率质量指标、Calibration/ECE 和纯时间划分契约；真实历史的按时间拆分回测与发布工件归档尚未实施。没有证明此基准能胜过 Market；不能称为最终真实比赛预测。
+- xG、Elo、自动 rho 拟合、ML、概率校准拟合、Ensemble、Model Snapshot、预测 API 与推荐保持未实施；后续任何样本/权重/公式/精度/rho 变化须升级版本并另行授权。
+
+## P4-4C 后续债务（不在本轮实施）
+
+- evaluation-v1 只验证评估数学，FROZEN_SAMPLE_SET 不认证真实数据来源或历史无泄漏。需真实、足量、赛果明确且严格时间语义的样本才能判断 Goals Baseline 与 Market 的表现，不能输出优胜结论。
+- eligible 样本群及分母由上游明确提供；真实缺预测原因、各模型相同样本群的 coverage 与来源质量仍需数据管道设计。本轮只有纯 adapter，未建 evaluation_runs/model_registry/prediction_snapshots 表或公开 API。
+- 未来三赛季研究须单独设计 RESEARCH_REPLAY / historical_research_dataset，与 LIVE_AS_OBSERVED 严格区分；不得用 provider published_at 回填 analysis_visibility，不得让今天导入的旧历史冒充当时 live-visible Feature。
+- 时间拆分只按显式 UTC 比赛时间分组，没有训练、历史回放、置信区间、显著性检验或校准器拟合。固定 10 桶的 ECE 依赖样本量，不能包装成 confidence score。
+- Research Replay、xG、Elo、主客场增强、时间衰减、rho 拟合、ML、Ensemble、Recommendation 与 ROI/EV 等等待另行授权；本轮完成后停止。
 
 ## 已关闭的本机待办（2026-09-30 后续）
 

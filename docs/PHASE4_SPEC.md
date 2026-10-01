@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-已交付 P4-0～P4-3、P4-4A Score Probability Mathematics 与 P4-4B1 Goals Baseline Lambda Estimator；当前基线规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics 与 P4-4B1 Goals Baseline Lambda Estimator；P4-4C Model Evaluation Core 已实施，待人工复核。当前评估规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -367,3 +367,77 @@ Golden Case 使用指定的两队 5 场进失球序列，历史主客场交错�
 本机日志（Git 忽略）：`artifacts/goals-baseline-sqlite-tests.txt`、`artifacts/goals-baseline-postgres-tests.txt`；首轮排查日志另存 `artifacts/goals-baseline-postgres-first-run.txt`。没有新增依赖；前端无修改，本轮未重跑前端构建。
 
 共 8 个文件：新增 `apps/api/src/jc/analysis/goals_baseline.py`、`tests/test_goals_baseline.py`、`docs/DECISIONS/ADR-011-goals-baseline-lambda.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`、`README.md`。完成后停止于 P4-4B1，等待人工复核，不继续下一阶段。
+
+## P4-4C Model Evaluation Core
+
+P4-4B1 经人工复核后，新增 `analysis/evaluation.py`，只消费上游已经准备好的不可变 `EvaluationSample`，不新增足球因素。模块运行时仅依赖标准库，不访问数据库、网络、Provider、当前时间或任何 Snapshot 查询。所有结果固定 `evaluation_mode=FROZEN_SAMPLE_SET`；不判断投注价值，也不输出 WINNER/best_model。
+
+### Contract 与固定规则
+
+样本字段为 sample_id、match_id、prediction_source、HOME/DRAW/AWAY 概率、actual_result，以及可选的带时区 match_time。概率只接受 Decimal 或 Decimal string，复制为不可变映射；赛果必须由上游明确映射，拒绝解析比分文本。单模型重复 `prediction_source + match_id`、跨模型矛盾赛果、非法输入均整次拒绝，不静默排除。
+
+| 规则 | evaluation-v1 |
+| --- | --- |
+| 版本 | EVALUATION_VERSION="evaluation-v1"；公式、clipping、精度、容差、桶、映射、样本及 aggregate 规则变化须升级 |
+| 概率验证 | 全部有限且 0≤p≤1，abs(Σp−1)≤1e-23；精确验证输入和，兼容 market-v1 序列化；拒绝 float/NaN/Infinity，不重归一 |
+| 数值计算 | 独立 50 位 Decimal Context / ROUND_HALF_EVEN，固定指数范围、traps/flags；核心结果为 Decimal string |
+| Log Loss | mean(−ln(max(p_actual,1e-15)))；LOG_EPSILON=1e-15，clipping_count 统计 p_actual 严格低于 epsilon 的场数，原概率保留 |
+| Brier | mean_samples(Σ_classes(p−y)²)，三类求和、不除以 3；完美 0，错误极值 2 |
+| Accuracy | 正确 argmax/N；完全并列时 HOME → DRAW → AWAY，辅助指标 |
+| Calibration | 三类各自 one-vs-rest，10 桶 [0,.1)…[.9,1]；count/mean_predicted_probability/actual_frequency/绝对 calibration_error，空桶统计为 null |
+| ECE | 每类 Σ_bin(count_bin/N)×abs(mean_probability−actual_frequency)；macro 为 HOME/DRAW/AWAY ECE 的算术平均 |
+| Aggregate | 样本等权，按 match_id/source/sample_id 稳定累加，模型键排序；0 样本核心统计 null、clipping_count=0，30 个空桶保留 |
+| Coverage | evaluated_samples/eligible_samples；未知或零分母 null，显式正分母且无评估样本为 0；分母必须为 int 且≥已评估数 |
+| Paired | 指定 baseline，与每个 candidate 按 match_id 交集逐场求差再平均；direction=candidate − baseline，负数表示 candidate loss 更低；无交集差值 null |
+| 时间划分 | temporal_split 按上游 match_time 的 UTC 时间稳定排序，< cutoff 为 past，≥ cutoff 为 future；缺失/无时区/同场矛盾时间拒绝，无随机切分或训练 |
+
+`evaluate(samples, eligible_samples=...)` 仅聚合单模型。`evaluate_models({source: samples}, baseline=..., eligible_samples={source: total})` 保留各模型自己完整集合的指标、coverage 和每个 candidate 对 baseline 的配对结果；baseline 必须显式传入，空模型也保留。不同模型全量 aggregate 之差不是配对结果。
+
+纯 adapter `market_evaluation_sample(market_data, ...)` 仅使用冻结 external_consensus.p_market；null 返回 None，不用 Sporttery 补齐。`goals_evaluation_sample(result, ...)` 仅在 OK 且 score 非空时使用 score.one_x_two；INSUFFICIENT_DATA / OUT_OF_RANGE 返回 None。两者保留来源版本并统一验证、冻结概率。上游过滤 None 前先明确 eligible 范围，不能把只成功预测的场数当成总分母。
+
+### 可复现的数学样例
+
+```python
+from jc.analysis.evaluation import EvaluationSample, evaluate
+
+# 合成 Golden Case，仅验证数学；不代表真实回测。
+samples = [
+    EvaluationSample("s1", "m1", "example-v1", {"HOME": ".7", "DRAW": ".2", "AWAY": ".1"}, "HOME"),
+    EvaluationSample("s2", "m2", "example-v1", {"HOME": ".2", "DRAW": ".6", "AWAY": ".2"}, "DRAW"),
+    EvaluationSample("s3", "m3", "example-v1", {"HOME": ".1", "DRAW": ".2", "AWAY": ".7"}, "AWAY"),
+]
+metrics = evaluate(samples, eligible_samples=3)
+assert metrics["accuracy"] == metrics["coverage"] == "1"
+```
+
+手算 Log Loss=−ln(.294)/3；Brier=(.14+.24+.14)/3=.52/3；Accuracy=1；ECE HOME=1/5、DRAW=4/15、AWAY=1/5，macro=2/9。测试逐桶核验 mean/frequency/error 和空桶，并验证 exact zero、0.1、1.0 边界、非等样本集的配对差值以及原概率不被 clipping 修改。
+
+### Provenance 与历史研究
+
+FROZEN_SAMPLE_SET 只表示输入固定，不认证真实线上来源或无时间泄漏。analysis_visibility 代表本系统当时实际已经看见的数据；今天导入 2024 年历史不能生成 2024 年 live-visible FeatureSnapshot，禁止 `visible_at = provider published_at` 等伪造。未来 LIVE_AS_OBSERVED 与 RESEARCH_REPLAY / historical_research_dataset 必须分开设计；当前两个模式均未实施，时间拆分也不构成历史回放。
+
+当前不能证明 Goals Baseline 优于 Market，因为尚无真实、足量、严格时间语义的历史样本结果。没有 Research Replay、xG、Elo、主客场增强、时间衰减、rho 拟合、ML、Ensemble、P_final、ROI/EV、Recommendation、公开 Prediction API 或自动投注。完整语义见 [ADR-012](DECISIONS/ADR-012-model-evaluation-core.md)。
+
+### P4-4C 验证
+
+最终实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 新增评估测试 | 105 项（参数化后）；原 324 项 + 新增 105 项 = 429 项 |
+| SQLite 全量 pytest | 429 passed，48.85 秒 |
+| PostgreSQL 全量 pytest | PostgreSQL 17.11，独立 127.0.0.1:55433 测试库 jc_evaluation_test：429 passed，54.97 秒 |
+| 必须回归的旧链路 | test_features / test_results / test_market_model / test_score_matrix / test_goals_baseline / test_odds 均包含于两套全量测试并通过 |
+| Ruff | apps/api/src、tests 范围全部通过；本轮 3 个 Python 文件 format --check 通过 |
+| mypy | 37 个源文件全部通过 |
+| 独立运行 | python -S 禁用 site-packages，并以导入守卫拒绝第三方和其他 jc 业务模块，evaluation 导入及完美预测计算通过 |
+| Migration / Schema | 无新增或修改的表、Migration；现有 upgrade/check/downgrade 测试在 SQLite/PG 通过，head 保持 008_market_probability |
+| API / 前端 | 无新增或修改 API、预测端点或前端；没有新增依赖 |
+
+首轮两套全量各有 1 个旧验收用例失败，均为 `test_kickoff_change_invalidates_and_old_raw_does_not_revert`：真实时钟可能在连续调用中给出相同时间，破坏用例预期的 older < newer 或 cutoff < invalidation，分别导致历史映射被视为已失效、或“旧” Raw 与新 Raw 同时而未被旧数据保护拦截。仅在该合成测试中替换 `jc.time.datetime` 为确定性递增时钟，使 ORM 捕获的 utcnow 默认值也遵循同一时间线；保留所有原断言，没有修改业务处理、历史可见性或旧 Migration。针对性复验后重跑两套完整测试，全部通过。该测试时钟不生成真实历史样本或回填生产 analysis_visibility。
+
+两套最终测试均无失败、无跳过，保留原有 1 条 Starlette/httpx 弃用警告。日志在本机 Git 忽略的 `artifacts/evaluation-sqlite-tests.txt`、`artifacts/evaluation-postgres-tests.txt`；首轮日志分别保留为 `evaluation-sqlite-first-run.txt`、`evaluation-postgres-first-run.txt`。专用 PG 测试库最终仅剩空 alembic_version 表，本轮启动的独立测试实例已停止；没有修改或迁移演示业务库。
+
+文件共 9 个：新增 `apps/api/src/jc/analysis/evaluation.py`、`tests/test_evaluation.py`、`docs/DECISIONS/ADR-012-model-evaluation-core.md`；修改 `docs/PHASE4_SPEC.md`、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`、`README.md`、`tests/test_acceptance.py`。前端未改，未重跑其 test/build；真实 Provider、Docker/Redis、研究数据集与发布工件归档等既有 Gate 不因此关闭。
+
+本轮停止于 P4-4C，等待人工复核，不继续 Research Replay 或后续模型/推荐阶段。

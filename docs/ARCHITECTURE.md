@@ -92,3 +92,20 @@ P4-4B1 增加 `analysis/goals_baseline.py` 纯函数，复用该数学引擎：
 估计器无 DB、Provider、网络、时钟或 Market 依赖，不读取 market、odds_movement 或 past_stats/xG。赛果跨源按 match_id 合并，比分冲突整场排除；历史方向按实体 ID 计算，交锋可同时属于两队。缺样本不生成 lambda，超出引擎范围保留 lambda 并显式返回 OUT_OF_RANGE；两种情况 score 均为空。无默认值、主场优势、衰减或 prior。目标隔离和可见性仍由 Feature 边界承担；旧快照内容与底座保持不变。
 
 结果仅是内存中的 Goals-only Football Baseline，没有 Model Snapshot、预测 API 或前端接线，不能称为最终真实比赛预测。版本与选择规则见 [ADR-011](DECISIONS/ADR-011-goals-baseline-lambda.md)。
+
+P4-4C 增加标准库纯模块 `analysis/evaluation.py`：
+
+```text
+冻结 market_data.external_consensus.p_market ── Market adapter ─┐
+冻结 GoalsBaselineResult.score.one_x_two ───── Goals adapter ──┤
+上游明确的 match_id / sample_id / 实际 HOME/DRAW/AWAY ───────────┘
+                                  ↓ 不可变 EvaluationSample
+                 evaluation-v1 / FROZEN_SAMPLE_SET
+                    ↓                         ↓
+       Log Loss / Brier / Accuracy      分模型 coverage
+       三类 Calibration / ECE          共同 match_id 的配对差值
+```
+
+Adapter 只转换已有内容，缺概率返回不可评估；不从体彩补外部共识、不重新运行模型、不查询 DB/Provider/快照，也不访问网络或当前时间。调用者提供 eligible 分母及显式 baseline；指标无 winner、ROI 或推荐。`temporal_split` 仅按上游提供的带时区比赛时间做 past → future 分组，没有训练或随机切分。
+
+FROZEN_SAMPLE_SET 不证明 live as-of 可见性。未来 LIVE_AS_OBSERVED 与 RESEARCH_REPLAY 必须另立语义；今天导入的历史不得冒充系统过去可见，禁止把 provider published_at 写成过去的 analysis_visibility.visible_at。本轮没有历史回放、表、Migration 或新 API，详见 [ADR-012](DECISIONS/ADR-012-model-evaluation-core.md)。

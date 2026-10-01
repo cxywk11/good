@@ -1,5 +1,5 @@
 import copy
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import httpx
@@ -130,7 +130,19 @@ async def test_older_effective_backfill_cannot_replace_latest_or_leak(sessions):
         assert not any(row.decimal_odds == Decimal("9.99") for row in visible_before)
 
 
-async def test_kickoff_change_invalidates_and_old_raw_does_not_revert(sessions):
+async def test_kickoff_change_invalidates_and_old_raw_does_not_revert(sessions, monkeypatch):
+    # Real clock ticks can coincide: this scenario needs older < newer and
+    # cutoff < invalidation, including the ORM's captured utcnow defaults.
+    now = datetime(2026, 10, 1, 12, tzinfo=UTC)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            nonlocal now
+            now += timedelta(seconds=1)
+            return now.astimezone(tz)
+
+    monkeypatch.setattr("jc.time.datetime", Clock)
     await seed_demo(sessions)
     service = IngestionService(sessions)
     source = MockSportteryProvider()

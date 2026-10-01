@@ -2,6 +2,8 @@
 
 Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追加赔率、审核后台和历史曲线。已增加 Phase 4 的 P4-0～P4-3：赛后事实 Contract、不可变 Feature Snapshot、严格 cutoff 基础设施和仅消费冻结 Feature 的 Market Probability Baseline；P4-4A 增加显式 Decimal 参数的纯比分概率数学层；P4-4B1 增加仅使用冻结赛果、每队最近 20 场且至少 5 场的 Goals Baseline Lambda Estimator，rho 固定 0。这只是 Goals-only Football Baseline，不能称为最终真实比赛预测，没有投注推荐。
 
+P4-4C 增加纯 Model Evaluation Core：以版本固定的 Decimal 指标评估冻结样本，提供 Calibration/ECE、coverage 和共同比赛的配对差值。没有历史回填、训练、评估 API 或投注功能，当前不能证明 Goals Baseline 优于 Market；契约见 [ADR-012](docs/DECISIONS/ADR-012-model-evaluation-core.md)。
+
 **交付状态：可运行的 Mock 演示已打通真实 PostgreSQL；真实当日体彩与海外账号数据、完整 Docker/Redis 运行验收尚未完成。** 详见 [验收报告](docs/PHASE1_ACCEPTANCE.md)。
 
 ## 本次本机预览

@@ -367,7 +367,10 @@ def test_equal_raw_decimal_lines_share_series_without_rounding():
 )
 def test_history_time_boundaries(field, offset, accepted):
     h = match("past", kickoff=T - timedelta(days=3))
-    r = result(h, **{field: CUTOFF + timedelta(microseconds=offset)})
+    changes = {field: CUTOFF + timedelta(microseconds=offset)}
+    if field == "finished_at":
+        changes["replay_available_at"] = changes[field]
+    r = result(h, **changes)
     assert bool(feature(dataset([match(), h], results=[r])).team_strength["past_results"]) is accepted
 
 
@@ -382,35 +385,63 @@ def test_history_time_boundaries(field, offset, accepted):
     ],
 )
 def test_historical_match_itself_must_be_available_and_earlier(changes):
+    h = replace(match("past", kickoff=T - timedelta(days=3)), **changes)
+    assert feature(dataset([match(), h], results=[result(h)])).team_strength["past_results"] == []
+
+
+@pytest.mark.parametrize("offset", [-1, 0])
+def test_impossible_historical_finish_rejected_by_dataset(offset):
     h = match("past", kickoff=T - timedelta(days=3))
-    assert (
-        feature(dataset([match(), replace(h, **changes)], results=[result(h)])).team_strength["past_results"]
-        == []
-    )
+    r = result(h, finished_at=h.kickoff_at + timedelta(microseconds=offset))
+    with pytest.raises(ValueError, match="strictly after match kickoff_at"):
+        dataset([match(), h], results=[r])
 
 
-def test_impossible_historical_finish_is_excluded():
-    h = match("past", kickoff=T - timedelta(days=3))
-    assert (
-        feature(dataset([match(), h], results=[result(h, finished_at=h.kickoff_at)])).team_strength[
-            "past_results"
-        ]
-        == []
-    )
-
-
-def test_target_result_never_enters_feature_even_with_forged_early_times(historical):
-    original = feature(historical)
+def test_target_result_with_forged_early_times_rejected_by_dataset(historical):
     early = result(
         finished_at=T - timedelta(days=20),
         published_at=T - timedelta(days=20),
         replay_available_at=T - timedelta(days=20),
     )
-    ds = replace(
-        historical, results=tuple(r for r in historical.results if r.research_match_id != "target") + (early,)
-    )
-    assert feature(ds) == original
-    assert "result:target" not in json.dumps(original.model_dump())
+    with pytest.raises(ValueError, match="strictly after match kickoff_at"):
+        replace(
+            historical,
+            results=tuple(r for r in historical.results if r.research_match_id != "target") + (early,),
+        )
+
+
+@pytest.mark.parametrize("offset", [-1, 0])
+def test_target_finish_must_be_strictly_after_kickoff(offset):
+    r = result(finished_at=T + timedelta(microseconds=offset))
+    with pytest.raises(ValueError, match="strictly after match kickoff_at"):
+        dataset(results=[r])
+
+
+@pytest.mark.parametrize("historical_result", [False, True])
+@pytest.mark.parametrize("basis", list(AvailabilityBasis))
+@pytest.mark.parametrize("offset", [-1, 0])
+def test_result_availability_cannot_precede_finish(historical_result, basis, offset):
+    m = match("past", kickoff=T - timedelta(days=3)) if historical_result else match()
+    r = result(m)
+    when = r.finished_at + timedelta(microseconds=offset)
+    r = replace(r, replay_available_at=when, availability_basis=basis, published_at=when, effective_at=when)
+    matches = [match(), m] if historical_result else [m]
+    if offset < 0:
+        with pytest.raises(ValueError, match="replay_available_at must not precede finished_at"):
+            dataset(matches, results=[r])
+    else:
+        ds = dataset(matches, results=[r])
+        assert ds.results == (r,)
+        assert r.replay_available_at == r.finished_at
+
+
+@pytest.mark.parametrize("field", ["published_at", "effective_at"])
+def test_non_basis_provider_time_may_precede_finish(historical, field):
+    rows = tuple(replace(r, **{field: r.finished_at - timedelta(hours=3)}) for r in historical.results)
+    ds = replace(historical, results=rows)
+    report = run_research_evaluation(ds, ["target"], SPEC)
+    assert report["market_evaluable"] == report["goals_evaluable"] == 1
+    assert ds.results == rows  # No automatic time correction.
 
 
 def test_target_labels_cannot_change_feature_quality_or_provenance(historical):
@@ -512,7 +543,96 @@ def test_target_result_is_post_cutoff_label_only(historical, scores, actual):
     assert {s.actual_result for group in samples.values() for s in group} == {actual}
     detail = report["diagnostics"]["target"]
     assert detail["label_record_ids"] == ["result:target"]
-    assert "result:target" not in detail["input_record_ids"]["results"]
+    for ids in detail["input_record_ids"].values():
+        assert set(detail["label_record_ids"]).isdisjoint(ids)
+    assert "result:target" not in f"{feature(ds).model_dump()}"
+
+
+@pytest.mark.parametrize("field", ["home_team_id", "away_team_id"])
+@pytest.mark.parametrize("valid_peer", [False, True])
+def test_target_result_missing_identity_cannot_evaluate(historical, field, valid_peer):
+    rows = tuple(r for r in historical.results if r.research_match_id != "target")
+    rows += (result(**{field: None}),)
+    if valid_peer:
+        rows += (result(rid="peer-target", source="second"),)
+    ds = replace(historical, results=rows)
+    assert feature(ds) == feature(historical)
+    samples, report = build_research_evaluation_samples(ds, ["target"], SPEC)
+    assert all(not group for group in samples.values())
+    detail = report["diagnostics"]["target"]
+    assert detail["status"] == "NOT_EVALUABLE"
+    assert detail["diagnostics"] == ["TARGET_RESULT_CANONICAL_IDENTITY_MISSING"]
+    assert detail["label_record_ids"] == (
+        ["peer-target", "result:target"] if valid_peer else ["result:target"]
+    )
+
+
+@pytest.mark.parametrize("field", ["home_team_id", "away_team_id"])
+def test_target_result_identity_mismatch_rejected(field):
+    with pytest.raises(ValueError, match="canonical team identity"):
+        dataset(results=[result(**{field: "wrong-team"})])
+
+
+@pytest.mark.parametrize("field", ["home_team_id", "away_team_id"])
+def test_target_missing_identity_cannot_evaluate_even_with_market(historical, field):
+    ds = replace(
+        historical,
+        matches=tuple(
+            replace(m, **{field: None}) if m.research_match_id == "target" else m for m in historical.matches
+        ),
+    )
+    assert build_market_data(feature(ds))["external_consensus"]["p_market"] is not None
+    report = run_research_evaluation(ds, ["target"], SPEC)
+    assert report["matches_replayable"] == 1
+    assert report["market_evaluable"] == report["goals_evaluable"] == 0
+    assert report["diagnostics"]["target"]["status"] == "NOT_EVALUABLE"
+    assert report["diagnostics"]["target"]["diagnostics"] == ["TARGET_CANONICAL_IDENTITY_MISSING"]
+
+
+def test_target_outside_sporttery_pool_is_not_replayable(historical):
+    ds = replace(
+        historical,
+        matches=historical.matches + (match("external", sporttery_match_id=None),),
+        odds=historical.odds
+        + tuple(
+            replace(q, record_id=f"external:{q.record_id}", research_match_id="external")
+            for q in historical.odds
+        ),
+        results=historical.results + (result(match("external", sporttery_match_id=None)),),
+    )
+    with pytest.raises(NotReplayable, match="TARGET_NOT_IN_SPORTTERY_POOL") as error:
+        build_research_feature(ds, "external", SPEC)
+    assert error.value.diagnostic == "TARGET_NOT_IN_SPORTTERY_POOL"
+    report = run_research_evaluation(ds, ["target", "external"], SPEC)
+    assert report["matches_total"] == 2 and report["matches_replayable"] == 1
+    assert report["market_evaluable"] == report["goals_evaluable"] == 1
+    detail = report["diagnostics"]["external"]
+    assert detail["status"] == "NOT_REPLAYABLE"
+    assert detail["diagnostics"] == ["TARGET_NOT_IN_SPORTTERY_POOL"]
+    assert detail["input_match_ids"] == []
+    assert detail["input_record_ids"] == {"match_source_records": [], "odds": [], "results": []}
+    for metrics in report["evaluation"]["models"].values():
+        assert metrics["eligible_samples"] == 2 and metrics["coverage"] == "0.5"
+
+
+@pytest.mark.parametrize("value", ["", "   ", 123])
+def test_sporttery_id_must_be_nonempty_string_when_present(value):
+    with pytest.raises(ValueError, match="sporttery_match_id must be a nonempty string"):
+        match(sporttery_match_id=value)
+
+
+def test_non_sporttery_history_still_feeds_goals(historical):
+    ds = replace(
+        historical,
+        matches=tuple(
+            replace(m, sporttery_match_id=None) if m.research_match_id != "target" else m
+            for m in historical.matches
+        ),
+    )
+    assert feature(ds) == feature(historical)
+    report = run_research_evaluation(ds, ["target", "home-0"], SPEC)
+    assert report["market_evaluable"] == report["goals_evaluable"] == 1
+    assert report["diagnostics"]["home-0"]["diagnostics"] == ["TARGET_NOT_IN_SPORTTERY_POOL"]
 
 
 @pytest.mark.parametrize("other_score", [1, 3])
@@ -572,6 +692,11 @@ def test_invalid_run_cohort_rejected(ids):
         run_research_evaluation(dataset(), ids, SPEC)
 
 
+def test_unknown_feature_target_returns_stable_business_error():
+    with pytest.raises(ValueError, match="^Unknown research target$"):
+        build_research_feature(dataset(), "unknown", SPEC)
+
+
 def test_empty_run_is_explicit():
     report = run_research_evaluation(dataset(), [], SPEC)
     assert report["matches_total"] == 0
@@ -601,6 +726,43 @@ def test_provenance_order_and_all_input_orders_deterministic(historical):
     assert {m["source_record_id"] for m in meta["match_records"]} == {
         m.source_record_id for m in historical.matches
     }
+
+
+def test_match_provenance_separates_canonical_and_source_ids(historical):
+    # An unused match is not an input; source IDs deliberately sort differently.
+    ds = replace(
+        historical,
+        matches=tuple(
+            replace(m, source_record_id=f"source:{i:02}") for i, m in enumerate(reversed(historical.matches))
+        )
+        + (match("unused", "unrelated-home", "unrelated-away"),),
+    )
+    meta = feature(ds).context["research"]
+    canonical = sorted(m.research_match_id for m in historical.matches)
+    source_ids = sorted(m.source_record_id for m in ds.matches if m.research_match_id != "unused")
+    assert meta["input_match_ids"] == canonical
+    assert meta["input_record_ids"]["match_source_records"] == source_ids
+    assert set(meta["input_record_ids"]) == {"match_source_records", "odds", "results"}
+    assert {(m["research_match_id"], m["source"], m["source_record_id"]) for m in meta["match_records"]} == {
+        (m.research_match_id, m.source, m.source_record_id)
+        for m in ds.matches
+        if m.research_match_id != "unused"
+    }
+    detail = run_research_evaluation(ds, ["target"], SPEC)["diagnostics"]["target"]
+    assert detail["input_match_ids"] == canonical
+    assert detail["input_record_ids"] == meta["input_record_ids"]
+    for ids in meta["input_record_ids"].values():
+        assert set(detail["label_record_ids"]).isdisjoint(ids)
+
+
+def test_duplicate_match_source_record_identity_rejected():
+    with pytest.raises(ValueError, match="Duplicate match source record identity"):
+        dataset([match(), match("other", source_record_id="source:target")])
+
+
+def test_match_source_record_identity_is_scoped_by_source():
+    ds = dataset([match(), match("other", source="second", source_record_id="source:target")])
+    assert len(ds.matches) == 2
 
 
 @pytest.mark.parametrize(

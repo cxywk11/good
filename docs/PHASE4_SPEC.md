@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics、P4-4B1 Goals Baseline Lambda Estimator 与 P4-4C Model Evaluation Core；P4-4D1 Research Replay Semantics Core 已实施，待人工复核。当前研究规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics、P4-4B1 Goals Baseline Lambda Estimator 与 P4-4C Model Evaluation Core；P4-4D1 Research Replay Semantics Core 主体已完成人工复核，P4-4D1.1 验收前正确性修复已实施，待本轮人工验收后冻结 v1。当前研究规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -454,16 +454,22 @@ LIVE_AS_OBSERVED 代表系统当时实际看到的数据；RESEARCH_REPLAY 代�
 | --- | --- |
 | 可用性 | 显式 replay_available_at + availability_basis；SOURCE_SNAPSHOT_AT、PROVIDER_PUBLISHED_AT、PROVIDER_EFFECTIVE_AT、VERIFIED_ARCHIVE_TIMESTAMP 四种；provider basis 要求等于对应证据时间，无 magic lag |
 | 缺证据 | 显式 None/None 标记 REPLAY_UNAVAILABLE 并排除；GUESSED/UNKNOWN/非法枚举拒绝；所有非空时间 aware → UTC |
+| Dataset 时间完整性 | 所有 Result 强制 finished_at > 对应 Match kickoff_at；非空 replay_available_at ≥ finished_at；违反则拒绝 Dataset，不静默过滤/修正 |
+| Target 池/身份 | 目标缺 sporttery_match_id 则 NOT_REPLAYABLE + TARGET_NOT_IN_SPORTTERY_POOL；目标缺任一 canonical team ID 则 NOT_EVALUABLE；非体彩历史上下文仍允许 |
 | Cutoff | 只接受正整数 MINUTES_BEFORE_KICKOFF；一个 run 一个策略；T-30M 与 T-360M 分开运行 |
 | 目标/赔率 | available_at 及非空 published/effective 均 ≤ cutoff；目标不通过则 NOT_REPLAYABLE |
 | Latest/previous | provider/bookmaker/market/selection/精确 Decimal raw line 分组；coalesce(effective,published,available) + record_id 降序；仅从已筛过的可见记录中取前两条 |
 | 历史赛果 | 目标 Result 先硬排除；历史 Match 与 Result 三时间门槛、kickoff < finished < cutoff；两者 canonical team ID 完整，且涉及目标至少一队；多来源冲突交给原 Goals |
-| Label | 目标赛果不受赛前 cutoff 限制，只进 EvaluationSample.actual_result；比分冲突 NOT_EVALUABLE + CONFLICTING_TARGET_RESULT，不投票/择新/优先源 |
+| Label | 目标赛果不受赛前 cutoff 限制，但必须通过 chronology；两队 ID 完整且严格等于目标，缺失 NOT_EVALUABLE、矛盾拒绝 Dataset；只进 actual_result，比分冲突 NOT_EVALUABLE + CONFLICTING_TARGET_RESULT |
 | Feature | 兼容原 FeatureData；past_stats=[]，mapping_id/version=null 并注明 Dataset canonical identity；独立 research_data_quality，无总分 |
-| Provenance | dataset/version、match/cutoff、完整 manifest；稳定 input_record_ids 包含 previous 与历史 match 证据，label_record_ids 单独保留 |
+| Provenance | Match 的 (source, source_record_id) 唯一；input_match_ids 保存 canonical research_match_id；input_record_ids.odds/results/match_source_records 只保存对应记录 ID，包含 previous 与已用历史证据；label_record_ids 独立 |
 | Evaluation | 使用原 adapter/evaluate_models；prediction_source 带 @research-T{minutes}M；外层研究模式，内层仍 FROZEN_SAMPLE_SET；显式目标总数作两模型共同 eligible 分母 |
 
-入口 `build_research_feature` 可直接供原 Market/Goals 纯函数消费。`build_research_evaluation_samples` 返回 immutable 样本和 JSON-safe 报告；`run_research_evaluation` 运行原评估数学并保留报告。所有代码无 DB、网络、Provider、文件读取、当前时间或 analysis_visibility 依赖；无正式 Prediction、Schema、Migration、公开 API 或前端。
+入口 `build_research_feature` 可直接供原 Market/Goals 纯函数消费；未知目标返回稳定 `ValueError("Unknown research target")`。`build_research_evaluation_samples` 返回 immutable 样本和 JSON-safe 报告；`run_research_evaluation` 运行原评估数学并保留报告。所有代码无 DB、网络、Provider、文件读取、当前时间或 analysis_visibility 依赖；无正式 Prediction、Schema、Migration、公开 API 或前端。
+
+published_at/effective_at 不一概要求晚于 finished_at；仅被选为 provider availability basis 时，由于必须等于 replay_available_at，受不早于终场的约束。目标 Label 只豁免赛前 cutoff，不豁免 chronology、canonical identity 或证据完整性。
+
+本轮 sporttery_match_id 非空不构成“实际开售”证明。P4-4D2 Historical Research Dataset Persistence 真实导入时，必须验证 ID 来自官方体彩历史开售比赛池并保留证据，外部源随意提供的字符串不算证明；本轮不实施 D2。
 
 完整 contract、边界、诊断计数口径及版本升级规则见 [ADR-013](DECISIONS/ADR-013-research-replay-semantics.md)。测试 fixture 为 12 场历史、1 场目标、多公司多次外部报价，两队各 6 场历史，两个模型均得到合法 EvaluationResult；不断言谁胜过谁。
 
@@ -488,3 +494,27 @@ LIVE_AS_OBSERVED 代表系统当时实际看到的数据；RESEARCH_REPLAY 代�
 两套无失败、无跳过，保留原有一条 Starlette/httpx 弃用警告。日志保存在本机 Git 忽略的 `artifacts/research-replay-sqlite-tests.txt`、`artifacts/research-replay-postgres-tests.txt`。数据库测试只使用专用空库；研究模块自身不访问 DB。结束时确认专用库仅剩空 alembic_version、无业务表，本轮启动的独立 PostgreSQL 测试实例已停止，没有迁移或修改演示业务库。
 
 共 7 个文件：新增 `apps/api/src/jc/analysis/research_replay.py`、`tests/test_research_replay.py`、`docs/DECISIONS/ADR-013-research-replay-semantics.md`；修改本规范、`docs/ARCHITECTURE.md`、`docs/BACKLOG.md`、`docs/CONSTITUTION.md`。停止于 P4-4D1，等待人工复核。
+
+### P4-4D1.1 Pre-acceptance correction
+
+本次属于正式验收前正确性修复：补足 Dataset chronology、目标 canonical identity/体彩池、来源记录复合唯一性与 provenance 拆分；保留 `RESEARCH_REPLAY_VERSION="research-replay-v1"`。本轮通过人工验收后 v1 正式冻结，之后任何研究规则变化必须升级 v2。原实现阶段验证记录保留在上方，本轮结果另列于下方。
+
+历史非法 chronology 测试改为断言 Dataset 拒绝；合法赛后 Label 的新增、删除、分数及可用性变化仍不影响 Feature。完整 12 场历史 + 1 场目标 fixture、非体彩球队历史、Market/Goals/Evaluation 内存链路和 LIVE 隔离均继续验证。
+
+本轮实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| 测试增量 | Research Replay 参数化后净增 38 项，122 → 160；全量 551 → 589 项 |
+| SQLite 全量 pytest | 589 passed，43.97 秒 |
+| PostgreSQL 全量 pytest | PostgreSQL 17.11，127.0.0.1:55433 专用空库 jc_research_replay_correction_test：589 passed，52.12 秒 |
+| 指定回归 | test_features / test_market_model / test_score_matrix / test_goals_baseline / test_evaluation / test_research_replay / test_results / test_odds 均通过 |
+| 隔离及完整链路 | 原 fixture 集成、AST/独立导入/运行时 I/O 守卫、LIVE/analysis_visibility 隔离均通过；live 模块和原模型计算未改 |
+| Ruff | `ruff check apps/api/src tests` 与两个变更 Python 文件的 format --check 均通过 |
+| mypy | apps/api/src 38 个源文件全部通过 |
+| Migration / Schema | 无新增或修改；现有 upgrade/check/downgrade 两种数据库均通过，head 仍为 008_market_probability |
+| API / 前端 / 依赖 | 无新增或修改；前端 `npm test` 1 项通过 |
+
+两套后端全量均无失败、无跳过，保留原有 1 条 Starlette/httpx 弃用警告。日志为本机 Git 忽略的 `artifacts/research-replay-correction-sqlite-tests.txt`、`artifacts/research-replay-correction-postgres-tests.txt`。PG 结束后确认仅剩空 alembic_version 表，明细在 `artifacts/research-replay-correction-postgres-postflight.json`；本轮启动的专用测试实例已正常停止，未迁移或修改演示业务库。
+
+本轮仅修改 7 个已有文件：research_replay.py、test_research_replay.py、ADR-013、本规范、BACKLOG、CONSTITUTION 和 README。未进入 P4-4D2，没有历史采集、Research DB、Migration、API、Live Feature 或 analysis_visibility 改动；没有 xG、Elo、Ensemble、Recommendation、EV/ROI 或 LLM。通过这些检查只说明语义层可提交人工验收冻结，真实历史三赛季结论仍不能开始。

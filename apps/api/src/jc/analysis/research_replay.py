@@ -194,6 +194,8 @@ class ResearchDataset:
         if not sources:
             raise ValueError("source_manifest is required")
         matches = {m.research_match_id: m for m in self.matches}
+        if len({(m.source, m.source_record_id) for m in self.matches}) != len(self.matches):
+            raise ValueError("Duplicate match source record identity")
         for match in self.matches:
             if match.source not in sources:
                 raise ValueError("Match source missing from manifest")
@@ -206,6 +208,10 @@ class ResearchDataset:
                 raise ValueError("Record source missing from manifest")
             if isinstance(record, ResearchResult):
                 match = matches[record.research_match_id]
+                if record.finished_at <= match.kickoff_at:
+                    raise ValueError("Result finished_at must be strictly after match kickoff_at")
+                if record.replay_available_at is not None and record.replay_available_at < record.finished_at:
+                    raise ValueError("Result replay_available_at must not precede finished_at")
                 for name in ("home_team_id", "away_team_id"):
                     team, expected = getattr(record, name), getattr(match, name)
                     if team is not None and expected is not None and team != expected:
@@ -227,6 +233,10 @@ class ReplayCutoffSpec:
 
 class NotReplayable(ValueError):
     status = "NOT_REPLAYABLE"
+
+    def __init__(self, research_match_id: str, diagnostic: str) -> None:
+        self.diagnostic = diagnostic
+        super().__init__(f"{self.status}: {research_match_id}: {diagnostic}")
 
 
 def _visible(record: _AvailableRecord, cutoff: datetime) -> bool:
@@ -283,14 +293,18 @@ def build_research_feature(
 ) -> FeatureData:
     """Fresh FeatureData or NOT_REPLAYABLE; never mutates supplied records.
 
-    Input IDs are type-namespaced and include previous quotes and historical
-    match evidence. Target labels are unconditionally excluded before filtering.
+    Record IDs are type-namespaced; canonical match IDs are separate. Inputs
+    include previous quotes and historical match evidence, never target labels.
     """
     matches = {m.research_match_id: m for m in dataset.matches}
-    target = matches[research_match_id]
+    target = matches.get(research_match_id)
+    if target is None:
+        raise ValueError("Unknown research target")
+    if target.sporttery_match_id is None:
+        raise NotReplayable(research_match_id, "TARGET_NOT_IN_SPORTTERY_POOL")
     cutoff = cutoff_spec.at(target.kickoff_at)
     if not _visible(target, cutoff):
-        raise NotReplayable(f"NOT_REPLAYABLE: {research_match_id}: MATCH_UNAVAILABLE_AT_CUTOFF")
+        raise NotReplayable(research_match_id, "MATCH_UNAVAILABLE_AT_CUTOFF")
     series: dict[tuple, list[ResearchOddsQuote]] = defaultdict(list)
     for quote in dataset.odds:
         if quote.research_match_id == research_match_id and _visible(quote, cutoff):
@@ -335,7 +349,7 @@ def build_research_feature(
             or not teams.intersection((result.home_team_id, result.away_team_id))
             or not _visible(match, cutoff)
             or not _visible(result, cutoff)
-            or not match.kickoff_at < result.finished_at < cutoff
+            or result.finished_at >= cutoff
         ):
             continue
         used_matches.add(match.research_match_id)
@@ -357,8 +371,9 @@ def build_research_feature(
         **_metadata(dataset, cutoff_spec),
         "research_match_id": research_match_id,
         "analysis_cutoff": cutoff.isoformat(),
+        "input_match_ids": sorted(used_matches),
         "input_record_ids": {
-            "matches": sorted(used_matches),
+            "match_source_records": sorted(matches[mid].source_record_id for mid in used_matches),
             "odds": sorted(used_odds),
             "results": [row["record_id"] for row in history],
         },
@@ -440,28 +455,36 @@ def build_research_evaluation_samples(
             "research_match_id": mid,
             "analysis_cutoff": cutoff_spec.at(target.kickoff_at).isoformat(),
             "status": "NOT_REPLAYABLE",
-            "input_record_ids": {"matches": [], "odds": [], "results": []},
+            "input_match_ids": [],
+            "input_record_ids": {"match_source_records": [], "odds": [], "results": []},
             "label_record_ids": [],
             "diagnostics": [],
         }
         diagnostics[mid] = detail
         try:
             feature = build_research_feature(dataset, mid, cutoff_spec)
-        except NotReplayable:
-            detail["diagnostics"].append("MATCH_UNAVAILABLE_AT_CUTOFF")
+        except NotReplayable as error:
+            detail["diagnostics"].append(error.diagnostic)
             continue
         replayable += 1
         detail["status"] = "NOT_EVALUABLE"
+        detail["input_match_ids"] = feature.context["research"]["input_match_ids"]
         detail["input_record_ids"] = feature.context["research"]["input_record_ids"]
         detail["research_data_quality"] = feature.data_quality["research_data_quality"]
         labels = [r for r in dataset.results if r.research_match_id == mid]
         detail["label_record_ids"] = [r.record_id for r in labels]
+        if target.home_team_id is None or target.away_team_id is None:
+            detail["diagnostics"].append("TARGET_CANONICAL_IDENTITY_MISSING")
+            continue
         scores = {(r.home_score, r.away_score) for r in labels}
         if len(scores) > 1:
             detail["diagnostics"].append("CONFLICTING_TARGET_RESULT")
             continue
         if not labels:
             detail["diagnostics"].append("MISSING_TARGET_RESULT")
+            continue
+        if any(r.home_team_id is None or r.away_team_id is None for r in labels):
+            detail["diagnostics"].append("TARGET_RESULT_CANONICAL_IDENTITY_MISSING")
             continue
         if any(r.replay_available_at is None for r in labels):
             detail["diagnostics"].append("TARGET_RESULT_REPLAY_UNAVAILABLE")

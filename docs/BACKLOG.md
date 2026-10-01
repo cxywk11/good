@@ -1,6 +1,6 @@
 # 待办与技术债
 
-本文件不授权扩大本阶段范围。2026-10-01 P4-0～P4-3、P4-4A 比分概率数学层、P4-4B1 Goals-only Football Baseline 与 P4-4C Model Evaluation Core 已经人工复核；P4-4D1 Research Replay Semantics Core 已实施，待人工复核。后续模型与功能等待明确指令。
+本文件不授权扩大本阶段范围。2026-10-01 P4-0～P4-3、P4-4A 比分概率数学层、P4-4B1 Goals-only Football Baseline 与 P4-4C Model Evaluation Core 已经人工复核；P4-4D1 Research Replay Semantics Core 主体已完成人工复核，P4-4D1.1 验收前正确性修复待本轮人工验收。后续模型与功能等待明确指令。
 
 ## 当前阶段验收阻塞
 
@@ -68,6 +68,8 @@
 ## P4-4D1 后续债务（不在本轮实施）
 
 - research-replay-v1 已提供纯 contract、来源时间筛选、单一 cutoff、内存 Feature 与 Evaluation 集成；此前 P4-4C 的“另立研究语义”事项仅在这一纯函数范围关闭，没有真实三赛季研究结论。
+- P4-4D1.1 作为 pre-acceptance correctness fix，补充 chronology、Target/Label canonical identity、体彩目标池、Match 来源记录唯一性与 provenance 拆分；仍为 v1，待本轮人工验收后正式冻结，之后任何规则变化升级 v2。
+- P4-4D2 Historical Research Dataset Persistence 尚未实施。本阶段仅检查目标 sporttery_match_id 为非空字符串；D2 真实导入必须证明该 ID 来自**官方体彩历史开售比赛池**，保留官方来源证据并核验对应比赛。外部源提供字符串不等于实际开售证明。此要求只限制研究 Evaluation Target，可信非体彩比赛仍可用作球队历史上下文。
 - 尚未获取或验证任何真实历史源：需来源授权、快照/发布时间/生效时间/归档证据核验、稳定 canonical team IDs、赛事/球队历史覆盖率及缺失分析。manifest 记录调用方的证据声明，纯函数不会认证外部来源。
 - Research Dataset 持久化、不可变导入审计、原始工件保存、研究 Feature 独立表/工件及重放发布归档，均须语义人工复核后另行设计。不得借用 live FeatureSnapshot/MarketModelSnapshot 或回填 analysis_visibility。
 - Match V1 每个 research_match_id 只接收一个 canonical 定义；未来比赛时间/身份版本解析、固定延迟政策、不同来源证据可靠性规则要显式设计并升级 replay_version。今天导入数据的系统可见时间永远不能倒填。

@@ -4,9 +4,11 @@ Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追
 
 P4-4C 增加纯 Model Evaluation Core：以版本固定的 Decimal 指标评估冻结样本，提供 Calibration/ECE、coverage 和共同比赛的配对差值。没有历史回填、训练、评估 API 或投注功能，当前不能证明 Goals Baseline 优于 Market；契约见 [ADR-012](docs/DECISIONS/ADR-012-model-evaluation-core.md)。
 
-P4-4D1 增加 Research Replay semantics：显式不可变历史记录按固定 cutoff 构造内存 Feature，再运行原 Market / Goals / Evaluation，明确 RESEARCH_REPLAY 与 live_visibility_proven=false。P4-4D1.1 验收前修复补齐赛果 chronology、目标两队 canonical identity、体彩目标池和来源 provenance；仍为 research-replay-v1，待本轮人工验收后冻结。目标缺体彩 ID 不可回放，缺 canonical 身份不可评估；可信非体彩比赛仍可作为球队历史上下文。契约见 [ADR-013](docs/DECISIONS/ADR-013-research-replay-semantics.md)。
+P4-4D1 增加 Research Replay semantics：显式不可变历史记录按固定 cutoff 构造内存 Feature，再运行原 Market / Goals / Evaluation，明确 RESEARCH_REPLAY 与 live_visibility_proven=false。P4-4D1.1 验收前修复补齐赛果 chronology、目标两队 canonical identity、体彩目标池和来源 provenance；已通过人工复核，research-replay-v1 正式冻结；改变规则必须升级 v2。目标缺体彩 ID 不可回放，缺 canonical 身份不可评估；可信非体彩比赛仍可作为球队历史上下文。契约见 [ADR-013](docs/DECISIONS/ADR-013-research-replay-semantics.md)。
 
-**真实历史回测尚未完成，不能开始真实三赛季模型优劣结论。** 当前只验证语义与合成 fixture；P4-4D2 历史数据持久化尚未实施。真实数据采集、来源证明、覆盖率和导入仍待完成；后续导入必须验证 sporttery_match_id 来自官方体彩历史开售池，ID 非空本身不证明实际开售。
+**真实历史回测尚未完成，不能开始真实三赛季模型优劣结论。** P4-4D2A 已建立独立 research_* 持久化、Raw first、append-only、版本 hash、Seal/Load 与数据库保护，只以本地合成 fixture 验证。真实数据采集、来源证明、覆盖率和导入仍待完成；后续导入必须验证 sporttery_match_id 来自官方体彩历史开售池，ID 非空本身不证明实际开售。
+
+P4-4D2A 使用 Migration `009_research_dataset_persistence`，内部 `jc.research` Core 服务绕开 LIVE ORM 提交钩子；仅 SEALED 数据集可加载为原 ResearchDataset，replay-v1 代码与 analysis_visibility 均未修改。参见 [ADR-014](docs/DECISIONS/ADR-014-research-dataset-persistence.md) 的生命周期、hash、来源核验与失败策略。没有公开研究 API、爬虫或真实三赛季数据，停止于 D2A，不进入 D2B。
 
 **交付状态：可运行的 Mock 演示已打通真实 PostgreSQL；真实当日体彩与海外账号数据、完整 Docker/Redis 运行验收尚未完成。** 详见 [验收报告](docs/PHASE1_ACCEPTANCE.md)。
 

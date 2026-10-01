@@ -77,3 +77,28 @@ Phase 4 迁移 007_feature_foundation 追加 match_results、team_match_stats、
 唯一约束 `uq_market_feature_version(feature_snapshot_id, market_model_version)` 支持幂等和并发；`market_not_future` 检查 cutoff ≤ created_at。复用 immutability helper 创建 UPDATE / DELETE 拒绝触发器，不设级联删除。降级 008 → 007 仅移除 Market 表及其触发器，不改 Feature、报价或可见性历史。
 
 `market_data` 保存来源市场、完整性、逐项原始/去水概率、overround/vig、外部共识、体彩独立分布、概率差、单序列变化及 diagnostics。核心小数全部存字符串。source identity 是 provider + bookmaker；跨 Provider 同一真实公司可能重复覆盖，V1 不自动实体消歧或去重。
+
+## P4-4D2A Research Persistence
+
+Migration `009_research_dataset_persistence`，前置 008，当前共九个顺序迁移；001～008 不变。独立 Core metadata 的六表及所有 FK 均在 research_* 内，没有任何 LIVE FK 或写入路径。所有表使用 UUID 主键与 created_at；UTC 时间、JSONB（SQLite JSON）与不可变证据规则见 [ADR-014](DECISIONS/ADR-014-research-dataset-persistence.md)。
+
+| 表 | 主要业务字段 / 约束 |
+| --- | --- |
+| research_datasets | dataset_key + dataset_version 唯一；replay_version、status、description、manifest_json（用户 manifest + 冻结 source_manifest）、content_hash、quality_summary、sealed_at。contract.dataset_id 映射 dataset_key，存储 id 是另一个 UUID |
+| research_sources | dataset_id、source_name、source_type、provider_name、license_note、retrieval_note、base_url、verification_status、verified_at、verification_note；(dataset_id, source_name) 唯一；fixture 固定 UNVERIFIED |
+| research_raw_artifacts | dataset/source、artifact_type、external_ref、retrieved_at、content_hash、content_type、payload、metadata；(dataset_id, source_id, content_hash) 唯一；hash 幂等，冲突元数据不覆盖 |
+| research_matches | research_match_id、sporttery_match_id、competition_id、home/away_team_id、kickoff_at、source_id/source_record_id、四种来源时间/basis、raw_artifact_id、sporttery_verification_status、sporttery_verification_artifact_id；(dataset_id, research_match_id) 与 (dataset_id, source_id, source_record_id) 分别唯一 |
+| research_odds_quotes | record_id、research_match_id、source_id/provider/bookmaker、market_type/selection、line/decimal_odds、published/effective/replay_available_at/basis、raw_artifact_id；(dataset_id, record_id) 唯一 |
+| research_results | record_id、research_match_id、home/away_team_id、home/away_score、finished_at、source_id、published/effective/replay_available_at/basis、score_scope、raw_artifact_id；(dataset_id, record_id) 唯一；只允许 REGULATION |
+
+line/decimal_odds 在 PostgreSQL 为无固定 scale 的 NUMERIC；SQLite 用 TEXT 保存 Decimal 的精确十进制值，避免 Numeric 经浮点驱动舍入。写入/Seal/Load 都执行冻结 D1 contract 的数值和有限性校验，不截断到六位小数。比分为非负整数。
+
+可用时间/basis 必须同时 NULL 或同时存在，basis 为 SOURCE_SNAPSHOT_AT、PROVIDER_PUBLISHED_AT、PROVIDER_EFFECTIVE_AT、VERIFIED_ARCHIVE_TIMESTAMP；provider basis 的等值证据由 CHECK 和 contract 双重验证。Result finished_at > Match kickoff_at 的跨表关系由触发器约束，available_at ≥ finished_at（或 NULL）由 CHECK 约束，已知球队 ID 不能矛盾。
+
+Raw 复合 FK `(dataset_id, source_id, raw_artifact_id)` 强制每条成员同源取证。VERIFIED 体彩 FK 指向同 dataset 的官方历史工件，触发器检查官方来源、验证状态与该比赛 ID/球队/kickoff 证据；默认 UNVERIFIED，非空体彩 ID 无法单独证明开售。
+
+五张成员表 UPDATE/DELETE 触发器始终拒绝，INSERT 只允许父 dataset BUILDING。datasets 只能 BUILDING→SEALED/REJECTED，其他字段不可改，禁止删除或直接创建终态。PostgreSQL 同时拒绝 TRUNCATE。封存 hash、质量统计与时钟仅在合法 SEALED 转移时填入；业务内容通过内部 Seal 完整验证，Load 再验 hash/统计。
+
+索引：matches(dataset_id, kickoff_at)、odds(dataset_id, research_match_id, provider, bookmaker, market_type)、results(dataset_id, research_match_id)、raw(dataset_id, source_id)。没有分区、研究 Feature 表或模型表。
+
+quality_summary 包含比赛/已验证体彩目标/赔率/赛果/来源数量、有/无 availability 证据的记录数量、缺球队身份的比赛/赛果数量、开球时间 date_min/max；无主观质量分。Raw SHA-256 和 Dataset SHA-256 分开，UUID/创建时钟不参与内容 hash。

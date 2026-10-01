@@ -518,3 +518,59 @@ published_at/effective_at 不一概要求晚于 finished_at；仅被选为 provi
 两套后端全量均无失败、无跳过，保留原有 1 条 Starlette/httpx 弃用警告。日志为本机 Git 忽略的 `artifacts/research-replay-correction-sqlite-tests.txt`、`artifacts/research-replay-correction-postgres-tests.txt`。PG 结束后确认仅剩空 alembic_version 表，明细在 `artifacts/research-replay-correction-postgres-postflight.json`；本轮启动的专用测试实例已正常停止，未迁移或修改演示业务库。
 
 本轮仅修改 7 个已有文件：research_replay.py、test_research_replay.py、ADR-013、本规范、BACKLOG、CONSTITUTION 和 README。未进入 P4-4D2，没有历史采集、Research DB、Migration、API、Live Feature 或 analysis_visibility 改动；没有 xG、Elo、Ensemble、Recommendation、EV/ROI 或 LLM。通过这些检查只说明语义层可提交人工验收冻结，真实历史三赛季结论仍不能开始。
+
+## P4-4D2A Research Dataset Persistence
+
+D1/D1.1 现已通过人工复核，research-replay-v1 正式冻结。本节授权并实现独立持久化，不追溯修改上方各阶段的实现/验收记录，也不改变冻结 contract、cutoff、target pool、时间、identity、选择和 provenance 规则。
+
+Migration 009 新增 research_datasets、research_sources、research_raw_artifacts、research_matches、research_odds_quotes、research_results；001～008 不变。独立 research/schema metadata + Core importer/repository，全部 FK 为研究内部引用，不使用 LIVE ORM Session，也不触发其 after_commit 可见性扫描。
+
+| 项目 | D2A 规则 |
+| --- | --- |
+| Dataset identity | (dataset_key, dataset_version) 唯一；contract.dataset_id 是自然 key，另设存储 UUID |
+| 生命周期 | BUILDING→SEALED 或 REJECTED；两个终态不可恢复/追加；成员任何阶段禁止 UPDATE/DELETE |
+| Raw first | 本地原件先构造 Raw，再 parse/normalize；source/Raw 入库早于成员；每条成员必须同 dataset/source Raw |
+| 输入 | 原 ResearchDataset + ResearchImport 中的显式 source、Raw、provenance、verification contracts；不接受 ORM 任意数据 |
+| Raw 幂等 | 同 dataset/source/payload hash 且 metadata 一致返回 existing；修正 payload 追加；同 hash 改 metadata 冲突 |
+| Dataset hash | SHA-256、research-content-v1 canonical JSON；来源完整定义/manifest、所有成员与 Raw/关联/验证声明均纳入；排除 UUID、created/sealed 时钟、版本标签和 DB 行顺序 |
+| Seal | 锁定 BUILDING、从 DB 重建并完整验证 contract、FK、chronology、manifest、Raw/体彩证据与 hash；生成质量计数、sealed_at、SEALED |
+| 失败策略 | 导入预校验失败不写；成员事务原子提交 BUILDING；Seal 独立事务失败保留 BUILDING，显式拒绝或新版本，不跳坏行 |
+| 同版本重导 | SEALED 且 hash 相同才幂等返回；不同内容、BUILDING 或 REJECTED 均 CONFLICT |
+| DB 保护 | 复用 immutability helper；双库成员 INSERT/UPDATE/DELETE 与状态 trigger；PG 防 TRUNCATE；复合 FK 与时间/来源证据保护 |
+| 并发 | PG READ COMMITTED 父行锁、SQLite BEGIN IMMEDIATE 写锁，避免 hash 与终态之间追加成员 |
+| Source 核验 | 显式状态/时间/说明，不自动 VERIFIED；SYNTHETIC_FIXTURE 固定 UNVERIFIED；拒绝常见凭据字段/文本/URL |
+| 体彩核验 | 默认 UNVERIFIED；VERIFIED 须关联官方历史 Raw、已验证 source、当前比赛 ID/两队/kickoff 证据；未来真实目标从 verified_sporttery_targets 取得 |
+| Availability | 四枚举原值保存；缺失保持 NULL；provider basis 等值检查；绝不自动生成 replay_available_at |
+| Chronology | 沿用 v1 finished_at > kickoff_at，available_at NULL 或 ≥ finished_at；REGULATION，已知球队身份一致 |
+| Numeric | PG 无固定 scale NUMERIC；SQLite 精确十进制 TEXT；不经 float/double，完整 Decimal 往返 |
+| Materialization | load_research_dataset 仅接收 SEALED；复核完整 hash/quality；恢复原 ResearchDataset 再交给原 replay 纯函数 |
+
+quality_summary 包含 match_count、sporttery_target_verified_count、odds_count、result_count、sources_count、records_with/without_verified_availability、matches/results_missing_team_identity、date_min/max（开球范围），没有 quality_score。时间证据计数不等于真实来源已被核验。
+
+完整本地 `tests/fixtures/research_history.json` 链路有 12 历史比赛 + 1 体彩形状 Target、两个外部 bookmaker、各选项多时间赔率和 Target final result。所有 synthetic 来源与 Target 维持 UNVERIFIED，真实目标准入名单为空；为验证冻结算法，测试显式向原 replay 传入 synthetic target。加载前后 contract 完全相等、Evaluation 报告相等，Market 与 Goals 都生成样本，不评判模型优劣。
+
+完整决定、内部调用/锁/精度限制、官方验证声明口径见 [ADR-014](DECISIONS/ADR-014-research-dataset-persistence.md)。本轮无互联网访问、Crawler、公开 API、LIVE 表内容或 analysis_visibility 改动，也无 xG/Elo/ML/Ensemble/Recommendation/EV/ROI。
+
+**当前没有真实三个完整赛季 + 当前赛季数据。** 本轮仅为将来安全导入建立结构；完成后停止，不进入 D2B。
+
+### P4-4D2A 验证
+
+实测日期：2026-10-01（北京时间）。
+
+| 检查 | 结果 |
+| --- | --- |
+| 新增测试 | tests/test_research_persistence.py 参数化后 145 项；589 + 145 = 734 项 |
+| SQLite 全量 | 734 passed，140.40 秒 |
+| PostgreSQL 全量 | PostgreSQL 17.11；专用 jc_research_persistence_test，127.0.0.1:55433；734 passed，136.31 秒 |
+| SQLite / PG Migration | 009 upgrade/head、Alembic check、009→008 及 downgrade/base→head 均通过；旧 Feature/Market 迁移回归亦通过 |
+| 完整链路 | 13 场比赛、12 条多时间赔率、13 条赛果；contract round-trip 相等，加载前后 Evaluation 报告相等，Market/Goals 各 1 个样本 |
+| 并发 / 精度 | 双库 Seal/追加串行保护通过；PG NUMERIC / SQLite 精确文本保留超 30 位 Decimal；低全局精度不改变 hash/数值；JSONB 指数数值 hash 往返一致 |
+| LIVE 隔离 | 留有未证明 LIVE Raw 的情况下，Research 全链 SQL 无任何 LIVE 表访问；全部 LIVE 表行数保持不变，无可见性凭据或 Feature/Market Snapshot 新增 |
+| 冻结代码 | research_replay.py、Market/Goals/Evaluation、LIVE 模块、Migration 001～008 均无改动 |
+| Ruff | apps/api/src、tests、migrations/env.py 和新 009 全部通过；7 个新/新增测试 Python 文件及 env.py 格式检查通过 |
+| mypy | apps/api/src，43 个源文件通过 |
+| 真实数据 / API / 依赖 | 无真实历史数据、无互联网访问/爬虫、无公开 API/前端/依赖变更 |
+
+两套全量均无失败、无跳过，只有原有一条 Starlette/httpx 弃用警告。日志在 Git 忽略的 `artifacts/research-persistence-sqlite-tests.txt`、`artifacts/research-persistence-postgres-tests.txt`；postflight JSON 确认专用 PG 测试库仅余空 alembic_version。专用测试实例完成后停止，未迁移或修改演示业务库。
+
+本轮只交付 D2A，等待人工复核；没有获取过去三完整赛季或当前赛季真实历史，也不据合成 Evaluation 样本判断模型优劣。D2B、xG、Elo、ML、Ensemble、Recommendation、EV/ROI 均未实施。

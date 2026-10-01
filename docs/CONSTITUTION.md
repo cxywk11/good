@@ -33,7 +33,15 @@
 31. Evaluation Target 与其每条 Result 的 home_team_id / away_team_id 必须完整且严格一致；缺失则 NOT_EVALUABLE、已知身份矛盾则 Dataset 拒绝，不猜球队或仅按比分生成 HOME/DRAW/AWAY。Match 的 (source, source_record_id) 必须唯一；input_match_ids 只存 canonical research_match_id，input_record_ids.match_source_records 只存真正 source_record_id，并保留 source 关联证据。
 
 历史 Phase 0–3 禁止预测、P_model / P_final、BUY / WATCH / PASS、投注金额、串关、实时比分、滚球、自动投注，该约束保留为历史范围记录。
-当前已授权 P4-0～P4-3 文档、赛后事实、Feature 基础设施和仅消费冻结 Feature 的市场定价基准，以及 P4-4A 显式参数的纯比分概率数学层、P4-4B1 冻结赛果的 Goals Baseline Lambda Estimator；Market Snapshot 同样数据库级 append-only。P4-4B1 每队最近 20 场、至少 5 场、等权计算 GF/GA 与 lambda，rho 固定 0；不增加模型持久化或预测 API。P4-4C 增加纯 Model Evaluation Core，只做冻结样本的 Log Loss、Brier、Accuracy、Calibration/ECE、coverage、配对比较与时间划分契约，不进行真实历史研究或模型训练。P4-4D1 仅授权 Research Replay 语义与纯函数 fixture，不接入真实历史网站或研究数据库。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；历史采集/研究持久化、xG、Elo、rho 拟合、Model Snapshot、Ensemble 等后续能力等待复核和另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
+当前已授权 P4-0～P4-3 文档、赛后事实、Feature 基础设施和仅消费冻结 Feature 的市场定价基准，以及 P4-4A 显式参数的纯比分概率数学层、P4-4B1 冻结赛果的 Goals Baseline Lambda Estimator；Market Snapshot 同样数据库级 append-only。P4-4B1 每队最近 20 场、至少 5 场、等权计算 GF/GA 与 lambda，rho 固定 0；不增加模型持久化或预测 API。P4-4C 增加纯 Model Evaluation Core，只做冻结样本的 Log Loss、Brier、Accuracy、Calibration/ECE、coverage、配对比较与时间划分契约，不进行真实历史研究或模型训练。P4-4D1/D1.1 已人工复核并冻结 research-replay-v1；P4-4D2A 授权独立 Research 持久化与本地 fixture 导入，不接入真实历史网站。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；历史采集、xG、Elo、rho 拟合、Model Snapshot、Ensemble 等后续能力等待复核和另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
 演示样例必须包含 mock=true，生产环境不允许启用演示。
 
-P4-4D1.1 是 pre-acceptance correctness fix，保留 research-replay-v1；本轮通过人工验收后 v1 正式冻结，之后任何研究规则变化必须升级 v2。本轮停止于语义修复，不授权或实施 P4-4D2 Historical Research Dataset Persistence，仍不能形成真实历史三赛季结论。
+P4-4D1.1 是 pre-acceptance correctness fix，保留 research-replay-v1；现已通过人工验收，v1 正式冻结，之后任何研究规则变化必须升级 v2。D2A 仅增加独立持久化，不改变冻结规则，仍不能形成真实历史三赛季结论。
+
+32. Research 仅存 research_* 表，不读写 LIVE matches、versions、odds、results、stats、Feature/Market snapshots 或 analysis_visibility；内部持久化采用独立 Core 事务，不触发 LIVE ORM 可见性扫描。
+33. Research Dataset 以 (dataset_key, dataset_version) 唯一命名，BUILDING 只能转 SEALED 或 REJECTED；成员始终 append-only，终态不再追加。数据库必须强制保护，封存失败保留 BUILDING，不跳过坏行。
+34. 每条 Research normalized 记录必须有同 dataset/source Raw 工件。Raw 按 canonical payload SHA-256 幂等，修正追加新工件；Dataset 另算稳定业务内容 hash，不含存储 UUID/创建时钟，封存后修改内容必须新版本。
+35. 来源验证必须显式声明且有时间/说明，synthetic source 固定 UNVERIFIED。真实体彩目标必须 VERIFIED 并关联经核验的官方历史开售 Raw 与对应球队/开球身份；测试 fixture 不构成实际开售或模型质量证明。
+36. Research Import/Seal/Load 复用冻结 v1 的 availability 与 chronology，缺证据保持 NULL，不推断可用时间。只物化 SEALED ResearchDataset，再交给原纯 replay；源 metadata 不得存 API key、Authorization、cookie、password 或 token。
+
+D2A 只授权 Schema、显式 Import Contract、Raw Artifact、Dataset Version、Validation、Append-only、Materialization；禁止互联网爬虫、公开研究上传/回测 API，以及自动进入 D2B。当前没有真实三完整赛季 + 当前赛季数据。完整决定见 [ADR-014](DECISIONS/ADR-014-research-dataset-persistence.md)。

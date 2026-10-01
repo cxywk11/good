@@ -68,14 +68,14 @@
 ## P4-4D1 后续债务（不在本轮实施）
 
 - research-replay-v1 已提供纯 contract、来源时间筛选、单一 cutoff、内存 Feature 与 Evaluation 集成；此前 P4-4C 的“另立研究语义”事项仅在这一纯函数范围关闭，没有真实三赛季研究结论。
-- P4-4D1.1 作为 pre-acceptance correctness fix，补充 chronology、Target/Label canonical identity、体彩目标池、Match 来源记录唯一性与 provenance 拆分；仍为 v1，待本轮人工验收后正式冻结，之后任何规则变化升级 v2。
-- P4-4D2 Historical Research Dataset Persistence 尚未实施。本阶段仅检查目标 sporttery_match_id 为非空字符串；D2 真实导入必须证明该 ID 来自**官方体彩历史开售比赛池**，保留官方来源证据并核验对应比赛。外部源提供字符串不等于实际开售证明。此要求只限制研究 Evaluation Target，可信非体彩比赛仍可用作球队历史上下文。
+- P4-4D1.1 作为 pre-acceptance correctness fix，补充 chronology、Target/Label canonical identity、体彩目标池、Match 来源记录唯一性与 provenance 拆分；仍为 v1，现已通过人工验收并正式冻结，之后任何规则变化升级 v2。
+- P4-4D2A Research Dataset Persistence 已实现，真实来源获取/核验留给 D2B。冻结 D1 纯函数继续检查目标 sporttery_match_id 为非空字符串；D2 持久化准入额外要求证明该 ID 来自**官方体彩历史开售比赛池**，保留官方来源证据并核验对应比赛。外部源提供字符串不等于实际开售证明。此要求只限制研究 Evaluation Target，可信非体彩比赛仍可用作球队历史上下文。
 - 尚未获取或验证任何真实历史源：需来源授权、快照/发布时间/生效时间/归档证据核验、稳定 canonical team IDs、赛事/球队历史覆盖率及缺失分析。manifest 记录调用方的证据声明，纯函数不会认证外部来源。
-- Research Dataset 持久化、不可变导入审计、原始工件保存、研究 Feature 独立表/工件及重放发布归档，均须语义人工复核后另行设计。不得借用 live FeatureSnapshot/MarketModelSnapshot 或回填 analysis_visibility。
+- D2A 已实现 Research Dataset 持久化、Raw 工件、不可变成员与封存审计；研究 Feature 独立表/工件及重放发布归档仍待另行设计。不得借用 live FeatureSnapshot/MarketModelSnapshot 或回填 analysis_visibility。
 - Match V1 每个 research_match_id 只接收一个 canonical 定义；未来比赛时间/身份版本解析、固定延迟政策、不同来源证据可靠性规则要显式设计并升级 replay_version。今天导入数据的系统可见时间永远不能倒填。
-- 历史冲突仍交给 goals-baseline-v1；目标 label 任何比分冲突一律不可评估，无人工偏好裁决。来源赛果更正与标签冻结时点/研究数据版本治理尚未建立。
+- 历史冲突仍交给 goals-baseline-v1；目标 label 任何比分冲突一律不可评估，无人工偏好裁决。D2A 已建立不可变研究数据版本；跨来源赛果裁决与标签冻结时点政策仍待单独设计。
 - 当前计数是来源记录/可见报价诊断，未经真实覆盖验收；fixture 的合法 EvaluationResult 不证明任何模型优胜。完整性、样本选择偏差、跨 provider bookmaker 重复及统计显著性仍需未来真实研究。
-- 没有 Historical Crawler、Research Dataset DB、xG、Elo、Ensemble、Recommendation、ROI/EV、Model Snapshot 或公开 API；本轮完成后停止。
+- 没有 Historical Crawler、真实历史 Research Dataset、xG、Elo、Ensemble、Recommendation、ROI/EV、Model Snapshot 或公开 API；本轮完成后停止。
 
 ## 已关闭的本机待办（2026-09-30 后续）
 
@@ -84,3 +84,13 @@
 - 本地只读预检脚本：明确返回 PASS / BLOCKED / UNVERIFIED，缺少 Docker/Redis 和真实源时不输出全部 Gate 已通过。
 
 备份演练仅覆盖本机小数据集和数据库对象，不代表生产异机灾备、持续归档、角色/权限恢复和大数据量 RTO/RPO 已验收。
+
+## P4-4D2A 完成与后续债务
+
+- 已实现 Migration 009 的六张独立 research_* 表、source/raw/record 显式输入、Raw first、精确 Decimal、hash 幂等/冲突、数据库 append-only 与终态保护、Seal/Load；v1 和全部 LIVE 模块保持不变。
+- BUILDING 成员可追加，不能覆盖。Seal 失败保留 BUILDING；人工检查后可显式 REJECTED 并建立新版本。状态和 hash/quality 机制已具备，不代表已建立人工来源核验工作流。
+- 真实三完整赛季 + 当前赛季数据仍为零。D2B 才能在另行授权后获取来源授权和官方体彩历史原件、核验时间/身份/开售证据、检查赛季与球队覆盖；本轮没有访问互联网或爬虫。
+- 真实 Evaluation Target 未来须由 verified_sporttery_targets 返回的 VERIFIED 名单提供；合成 fixture 仅显式运行测试，来源和目标维持 UNVERIFIED。不得把通过导入误认为通过真实来源核验。
+- Source verification/retrieval/license 变更、Raw metadata 修订或 Match 定义更正使用新 dataset_version；旧版本不可更新。数据量增大后再设计冷存储/专用 DB，本阶段 payload 保留在 JSONB，无 S3/MinIO/Kafka/分区。
+- 当前 Seal/Load 完整读取 Dataset 并重新校验/hash，适用于本阶段本地 fixture 和初步批量导入；真实规模基准、流式校验、权限角色、独立研究发布工件归档尚未验收。
+- xG、Elo、ML、Ensemble、Recommendation、EV/ROI、公开研究 API 和模型优劣结论仍未实施；D2A 完成后停止，不自动推进 D2B。

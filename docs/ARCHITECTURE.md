@@ -130,3 +130,25 @@ RESEARCH_REPLAY 报告；live_visibility_proven=false；仅内存
 ResearchMatch/OddsQuote/Result 与 ResearchSource/Dataset 均为 frozen contract；集合复制为稳定 tuple。不存在 ORM/DB、Provider、网络、时钟、文件读取或 analysis_visibility 依赖。研究结果不写 live FeatureSnapshot/MarketModelSnapshot；其 odds_snapshot_id 只是兼容字段中的研究 record_id，不是数据库引用。
 
 同一个 run 统一 MINUTES_BEFORE_KICKOFF；不同 cutoff 独立运行并在 prediction_source 加 @research-T{minutes}M，保留 evaluation-v1 的唯一约束。外层研究模式与内层 FROZEN_SAMPLE_SET 数学语义同时保留。显式目标群包含所有失败/缺失目标作为 coverage 分母；目标 label 来源和输入 record IDs 分开追溯。详细规则见 [ADR-013](DECISIONS/ADR-013-research-replay-semantics.md)。没有真实历史获取、研究持久化、公开 API 或新模型。
+
+P4-4D2A 在冻结的 D1 之前加入独立内部持久化边界，D1 及其下游计算代码保持不变：
+
+```text
+本地原件/合成 fixture → ResearchRawArtifactInput
+                              ↓ parse/normalize
+冻结 ResearchDataset + Source declarations + Raw provenance + 显式 verification
+                              ↓ 全量输入验证
+独立 Core 事务 → research_sources / raw_artifacts → matches / odds_quotes / results
+                              ↓ 提交 BUILDING
+锁父 Dataset → 重建 contract / 全量验证 / SHA-256 / quality_summary → SEALED
+                              ↓ load_research_dataset（仅 SEALED，复核 hash）
+                       原 ResearchDataset
+                              ↓
+      原 research-replay-v1 → 内存 Feature → 原 Market / Goals / Evaluation
+```
+
+存储对象为 `jc/research/schema.py` 的独立 SQLAlchemy Core metadata，内部 importer/repository 不使用 ORM Session，因此不会触发 LIVE 全局 after_commit 可见性扫描。SQL 隔离测试在 LIVE 留有未证明 Raw 的条件下确认：全链无 LIVE 表查询/写入，analysis_visibility、FeatureSnapshot、MarketModelSnapshot 行数不变。数据库读写只在 Research repository，绝不进入 research_replay.py。
+
+所有 Research FK 留在六张 research_* 表。五张成员表 append-only；终态追加与非法 dataset 状态转移由双数据库 trigger 拒绝。PostgreSQL 父行锁与 SQLite 写锁将 Seal 和追加串行化；Seal 失败保留 BUILDING。自然 dataset_key/version 与内部 UUID 分开；内容 hash 使用排序后的 canonical 业务内容，与 DB 行顺序/创建时刻无关。
+
+来源验证和体彩官方开售证据属于持久化侧显式准入记录。未来真实研究先以 verified_sporttery_targets 选取 VERIFIED 目标，再向原 v1 传入该名单；synthetic 测试仍明确未验证，不改 v1 的 target pool 规则。没有爬虫、互联网访问、公开研究 API、对象存储或真实历史三赛季结论。设计与失败策略见 [ADR-014](DECISIONS/ADR-014-research-dataset-persistence.md)，本轮停止于 D2A。

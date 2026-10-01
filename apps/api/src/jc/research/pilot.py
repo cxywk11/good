@@ -7,19 +7,66 @@ be reviewed before implementing its historical adapter and using the D2A importe
 import argparse
 import json
 import os
+from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
 from dotenv import dotenv_values
 
-from jc.research.contracts import canonical_bytes, content_hash, reject_secrets
+from jc.analysis.research_replay import NotReplayable, ReplayCutoffSpec, build_research_feature
+from jc.research.contracts import (
+    ResearchImport,
+    canonical_bytes,
+    content_hash,
+    reject_secrets,
+    validate_import,
+)
 from jc.research.providers.probe import probe_source, record_blocked
 from jc.time import BEIJING, utcnow
 
 SPORTTERY_HISTORY = "https://webapi.sporttery.cn/gateway/uniform/football/getUniformMatchResultV1.qry"
 ODDS_HISTORY = "https://api.the-odds-api.com/v4/historical/sports/soccer_epl/odds"
 CUTOFF_MINUTES = (30, 90, 360)
+
+
+def assess_intake_gates(value: ResearchImport) -> dict:
+    """Independent A/B evidence gates; never attest C/D/E/F from their success.
+
+    Input must already pass unchanged D2A evidence validation. This helper does
+    not produce matches, source verifications, entity mappings or a SEALED claim.
+    """
+    value = validate_import(value)
+    targets = {v.research_match_id for v in value.sporttery_verifications if v.status == "VERIFIED"}
+    sources = {s.source.source_name: s for s in value.sources}
+    external = {
+        name
+        for name, source in sources.items()
+        if source.source.source_type == "EXTERNAL_ODDS_HISTORY" and source.verification_status == "VERIFIED"
+    }
+    coverage = {}
+    for minutes in CUTOFF_MINUTES:
+        covered = set()
+        for target in targets:
+            try:
+                feature = build_research_feature(value.dataset, target, ReplayCutoffSpec(minutes))
+            except NotReplayable:
+                continue
+            groups = defaultdict(set)
+            for quote in feature.market["quotes"]:
+                if quote["provider"] in external and quote["market_type"] == "1X2" and quote["line"] is None:
+                    groups[(quote["provider"], quote["bookmaker"])].add(quote["selection"])
+            if any(selections == {"HOME", "DRAW", "AWAY"} for selections in groups.values()):
+                covered.add(target)
+        coverage[str(minutes)] = len(covered)
+    return {
+        "verified_target_count": len(targets),
+        "cutoff_coverage": coverage,
+        "gates": {
+            "A": "PASS" if targets else "BLOCKED",
+            "B": "PASS" if any(coverage.values()) else "BLOCKED",
+        },
+    }
 
 
 def validate_window(start: date, end: date) -> None:
@@ -54,6 +101,11 @@ def blocked_pilot_report(start: date, end: date, probes: list[dict]) -> dict:
         "dataset": None,
         "probe_response_raw_count": sum(p.get("raw_content_hash") is not None for p in probes),
         "dataset_raw_count": 0,
+        "historical_envelopes": [
+            p["inspection"]
+            for p in probes
+            if p.get("inspection", {}).get("schema_status") == "HISTORICAL_ENVELOPE_OBSERVED"
+        ],
         "entity_mapping": mapping,
         "entity_mapping_hash": content_hash(mapping),
         "coverage": {
@@ -128,7 +180,9 @@ def discover_pilot(start: date, end: date, output: Path) -> dict:
     # Read only this credential; do not instantiate or modify LIVE settings.
     credential = os.environ.get("ODDS_PROVIDER_API_KEY") or dotenv_values(".env").get("ODDS_PROVIDER_API_KEY")
     if not credential:
-        probes.append(record_blocked(output, "the_odds_api_history", ODDS_HISTORY, "MISSING_API_KEY"))
+        probes.append(
+            record_blocked(output, "the_odds_api_history", ODDS_HISTORY, "BLOCKED_MISSING_CREDENTIAL")
+        )
     else:
         probes.append(
             probe_source(

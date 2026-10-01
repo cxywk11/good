@@ -16,7 +16,8 @@ from uuid import uuid4
 import httpx
 
 from jc.research.contracts import ResearchRawArtifactInput, canonical_bytes, reject_secrets
-from jc.time import utcnow
+from jc.research.providers.inspection import inspect_odds_history_payload
+from jc.time import parse_time, utcnow
 
 
 def public_url(url: str) -> str:
@@ -24,7 +25,7 @@ def public_url(url: str) -> str:
     if parts.scheme != "https" or not parts.hostname or parts.username or parts.password:
         raise ValueError("Discovery requires HTTPS without embedded credentials")
     query = []
-    for key, value in parse_qsl(parts.query):
+    for key, value in parse_qsl(parts.query, keep_blank_values=True):
         try:
             reject_secrets({key: value})
         except ValueError:
@@ -79,6 +80,7 @@ def record_blocked(output: Path, source: str, url: str, reason: str) -> dict:
         "raw_content_hash": None,
         "field_coverage": [],
         "sporttery_verification_status": "UNVERIFIED",
+        "scan_status": "PASS",
     }
     path = _save(output, {"source_probe": summary, "raw": None})
     return {**summary, "probe_path": str(path)}
@@ -178,6 +180,16 @@ def probe_source(
         "retention": retention,
         "field_coverage": fields,
         "sporttery_verification_status": "UNVERIFIED",
+        "scan_status": "PASS",
     }
+    parts = urlsplit(raw.external_ref or "")
+    if (
+        parts.hostname == "api.the-odds-api.com" and parts.path.startswith("/v4/historical/")
+        and response.is_success and retention == "UNCHANGED"
+    ):
+        requested = dict(parse_qsl(parts.query)).get("date")
+        summary["inspection"] = inspect_odds_history_payload(
+            body, requested_at=parse_time(requested) if requested else None, retrieved_at=retrieved_at,
+        )
     path = _save(output, {"source_probe": summary})
     return {**summary, "probe_path": str(path)}

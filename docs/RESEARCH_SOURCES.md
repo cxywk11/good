@@ -1,5 +1,8 @@
 # P4-4D2B Historical Source Discovery
 
+> P4-4D2B.1 更新见末尾。本文件前半保留原 D2B 探测事实；当前数字与 Gate 状态以
+> `research-probe-manifest.json` 及 `PILOT_DATASET_REPORT.md` 的机器表为准。
+
 核验日期：2026-10-01。实际本机 HTTP 探测窗口：09:46:11～09:56:23 UTC。
 本轮候选历史窗口为 2026-09-26～28，未取得官方销售日成员证据。
 **ACCEPTED 的真实数据源为 0；Pilot 被官方 Target Pool 证据阻塞。**
@@ -152,3 +155,32 @@ $env:RESEARCH_NETWORK_ENABLED = '1'
 首次恢复数据访问后，必须先审核保存的响应再写独立历史 Adapter；随后严格走
 `ResearchImport → import_research_dataset → SEALED → verified_sporttery_targets → 三个独立 Research Run`。
 本轮没有可验证的成功数据响应，因此按要求未提前实现 sporttery_history/odds_history/results_history 解析器。
+
+## P4-4D2B.1 Source Unblock（2026-10-01）
+
+本次仍查询 2026-09-26～28，一次官方普通 HTTP 请求得到 567，随后停止该接口请求。
+用户确认暂无正常浏览器导出的单个 response body。没有自动操纵浏览器，也没有修改请求伪装绕过验证。
+进程环境和 `.env` 都没有 Odds credential，本次没有再次发送匿名历史请求。
+`BLOCKED_MISSING_CREDENTIAL` 与“账户没有历史套餐”不是同一结论；后者尚未验证。
+真实官方 Target、官方赔率历史、外部历史 envelope 均未取得；所有 Gate 与累计 probe 数由机器表报告。
+
+新增候选只调查明确带价格时刻的历史源：
+
+| 候选 | 时间与市场依据 | 研究使用及访问 | 决策 |
+|---|---|---|---|
+| odds-api.net（与 The Odds API 是不同服务） | [历史文档](https://www.odds-api.net/historical-odds-api) 定义 `tick_ts` 为价格点记录时刻；按 event/selection 和 UTC 窗口查询。[市场说明](https://www.odds-api.net/betting-markets) 列出三项赛果、handicap、total；具体足球场次和三选项完整性还需实测 | [许可](https://www.odds-api.net/terms) 允许内部分析、回测及留存，限制原始数据分发。历史访问要求付费基础计划和 History add-on；本机未提供该源凭据，未取得真实数据 | 数据准入 BLOCKED；仅候选文档发现，不能 ACCEPTED |
+| Betfair Historical Data | [官方格式说明](https://historicdata.betfair.com/Betfair-Historical-Data-Feed-Specification.pdf) 定义 `pt` 为 epoch 毫秒发布时间，提供 exchange 历史变化记录。它不是博彩公司三项赔率的直接等价替换；实际足球 MATCH_ODDS、三项价格、时刻及映射仍需真实文件核验 | [研究访问说明](https://support.developer.betfair.com/hc/en-us/articles/30553823020444-Does-Betfair-provide-historical-data-for-academic-research) 要求经官网、已注册且所在地区支持的 Betfair.com 账号；[下载说明](https://support.developer.betfair.com/hc/en-us/articles/12859956891932-How-Can-I-Make-HTTP-Requests-to-the-Historical-Data-API) 要求已购并在 My Data 的数据。未提供账号或已授权文件，未验证本项目许可 | BLOCKED；不绕过账号、地区或授权限制 |
+
+上述四个 HTML 页面（odds-api.net history/markets/terms、Betfair research access）进行了本机单次公开 probe。
+HTTP 200 仅证实文档可达。包含前端或凭据示例的正文经 guard 脱敏，retention 如实进入 manifest；没有拿文档里的示例当真实赔率。
+Betfair PDF 格式及下载说明仅用官方网页工具核阅，未宣称其属于本机 response Raw。
+不下载无逐条 snapshot timestamp 的 closing/opening CSV；这类数据三个 cutoff coverage 一律为 0。
+
+新增工具为 `jc.research.official_evidence` 和 `jc.research.probe_manifest`。
+Inspector 的 `EXPECTED_FROM_JS` 与 `OBSERVED_IN_REAL_RESPONSE` 分离；只报告保存后的实际字段及路径，不生成完整历史 Adapter。
+未出现的字段保持 missing；观察到 matchDate 不证明销售日；观察到 updateDate/updateTime 也不证明时区或历史可用性。
+有真实响应后需逐字段复核，再通过现有 D2A evidence/import/Seal 路径。没有降低 D2A 条件，也没有用文件名或 host 声明直接认证官方身份。
+
+Manifest 从本地 summaries/Raw 机器构建，稳定排序并重算 canonical hash；绝不包括正文、HTTP 请求头或凭据。
+早期原件若缺 `text_encoding`，标明 `LEGACY_BYTE_ENCODING_UNVERIFIED`；旧报告中“全部原始字节均可复算”的说法在这些文件上不再成立。
+详见 [当前 Pilot 报告](PILOT_DATASET_REPORT.md) 和 [可提交审计清单](research-probe-manifest.json)。

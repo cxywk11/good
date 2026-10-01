@@ -140,6 +140,32 @@ def test_redirect_is_preserved_but_never_followed(tmp_path):
     assert raw["metadata"]["redirect_location"] == "https://example.test/login"
 
 
+def test_historical_envelope_inspected_after_raw_without_storing_credential(tmp_path, monkeypatch):
+    original = probe.inspect_odds_history_payload
+    calls = []
+
+    def inspect(body, **kwargs):
+        assert len(list(tmp_path.glob("*.json"))) == 1
+        return original(body, **kwargs)
+
+    def response(request):
+        calls.append(request)
+        return httpx.Response(200, json={
+            "timestamp":"2026-09-26T12:00:00Z", "previous_timestamp":None, "next_timestamp":None,
+            "data":[{"id":"SYNTHETIC-EVENT"}],
+        })
+
+    monkeypatch.setattr(probe, "inspect_odds_history_payload", inspect)
+    result = probe.probe_source(
+        tmp_path, "the_odds_api_history", "https://api.the-odds-api.com/v4/historical/sports/soccer_epl/odds",
+        params={"apiKey":"SYNTHETIC-PRIVATE", "date":"2026-09-26T12:03:00Z", "markets":"h2h,spreads,totals"},
+        transport=httpx.MockTransport(response),
+    )
+    assert len(calls) == 1
+    assert result["inspection"]["timestamp"] == "2026-09-26T12:00:00Z"
+    assert all("SYNTHETIC-PRIVATE" not in file.read_text("utf-8") for file in tmp_path.glob("*.json"))
+
+
 @pytest.mark.network
 @pytest.mark.skipif(os.getenv("RESEARCH_NETWORK_ENABLED") != "1", reason="Explicit network opt-in required")
 def test_real_history_probe_opt_in(tmp_path):

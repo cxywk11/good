@@ -67,7 +67,7 @@ def test_discovery_stays_bounded_and_missing_credentials_are_recorded(tmp_path, 
     assert len(requests) == 1
     assert requests[0][1]["pageSize"] == "30"
     assert requests[0][1]["pageNo"] == "1"
-    assert report["probes"][1]["reason"] == "MISSING_API_KEY"
+    assert report["probes"][1]["reason"] == "BLOCKED_MISSING_CREDENTIAL"
     assert json.loads((output / "pilot-report.json").read_text("utf-8"))["status"] == "BLOCKED"
     with pytest.raises(ValueError, match="new artifact directory"):
         pilot.discover_pilot(date(2026, 9, 26), date(2026, 9, 28), output)
@@ -77,3 +77,29 @@ def test_discovery_requires_network_opt_in(tmp_path, monkeypatch):
     monkeypatch.delenv("RESEARCH_NETWORK_ENABLED", raising=False)
     with pytest.raises(RuntimeError, match="RESEARCH_NETWORK_ENABLED"):
         pilot.discover_pilot(date(2026, 9, 26), date(2026, 9, 28), tmp_path / "new-attempt")
+
+
+def test_credentialed_discovery_calls_only_one_historical_snapshot(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESEARCH_NETWORK_ENABLED", "1")
+    monkeypatch.setenv("ODDS_PROVIDER_API_KEY", "SYNTHETIC-PRIVATE")
+    calls = []
+
+    def fetch(output, source, url, **kwargs):
+        output.mkdir(parents=True, exist_ok=True)
+        calls.append((source, kwargs["params"]))
+        summary = {"source": source, "status": "FETCHED", "raw_content_hash": "synthetic"}
+        if source == "the_odds_api_history":
+            summary["inspection"] = {
+                "schema_status": "HISTORICAL_ENVELOPE_OBSERVED",
+                "timestamp": "2026-09-26T12:00:00Z",
+            }
+        return summary
+
+    monkeypatch.setattr(pilot, "probe_source", fetch)
+    report = pilot.discover_pilot(date(2026, 9, 26), date(2026, 9, 28), tmp_path / "attempt")
+    assert len(calls) == 2
+    assert calls[1][0] == "the_odds_api_history"
+    assert calls[1][1]["markets"] == "h2h,spreads,totals"
+    assert calls[1][1]["date"] == "2026-09-26T12:00:00Z"
+    assert report["historical_envelopes"][0]["timestamp"] == "2026-09-26T12:00:00Z"
+    assert report["gates"]["A"]["status"] == report["gates"]["B"]["status"] == "BLOCKED"

@@ -729,6 +729,48 @@ def official_test_declaration(packet):
     )
 
 
+def test_intake_gate_a_uses_d2a_and_does_not_open_other_gates(packet):
+    from jc.research.pilot import assess_intake_gates
+
+    assert assess_intake_gates(packet)["gates"] == {"A":"BLOCKED", "B":"BLOCKED"}
+    verified = official_test_declaration(packet)
+    assert assess_intake_gates(verified)["gates"] == {"A":"PASS", "B":"BLOCKED"}
+    invalid = replace(packet, sporttery_verifications=verified.sporttery_verifications)
+    with pytest.raises(ValueError, match="artifact missing"):
+        assess_intake_gates(invalid)
+
+
+@pytest.mark.parametrize("time_kind", ["opening", "closing", "snapshot"])
+def test_external_complete_1x2_without_snapshot_has_zero_cutoff_coverage(packet, time_kind):
+    from jc.research.pilot import assess_intake_gates
+
+    packet = official_test_declaration(packet)
+    odds_sources = {q.provider for q in packet.dataset.odds}
+    sources = tuple(
+        replace(source, source=replace(source.source, source_type="EXTERNAL_ODDS_HISTORY"),
+                verification_status="VERIFIED", verified_at=T, verification_note="Synthetic test only")
+        if source.source.source_name in odds_sources else source for source in packet.sources
+    )
+    odds = tuple(
+        replace(q, replay_available_at=None, availability_basis=None) if time_kind != "snapshot" else q
+        for q in packet.dataset.odds
+    )
+    packet = replace(packet, sources=sources, dataset=replace(
+        packet.dataset, odds=odds, source_manifest=tuple(s.source for s in sources),
+    ))
+    report = assess_intake_gates(packet)
+    assert report["gates"]["A"] == "PASS"
+    if time_kind == "snapshot":
+        assert report["gates"]["B"] == "PASS"
+        assert report["cutoff_coverage"]["30"] == 1
+        partial = replace(packet, dataset=replace(packet.dataset, odds=tuple(q for q in odds if q.selection != "DRAW")))
+        partial = replace(partial, provenance=tuple(p for p in partial.provenance if p.record_type != "ODDS" or p.record_id in {q.record_id for q in partial.dataset.odds}))
+        assert assess_intake_gates(partial)["gates"]["B"] == "BLOCKED"
+    else:
+        assert report["gates"]["B"] == "BLOCKED"
+        assert report["cutoff_coverage"] == {"30":0,"90":0,"360":0}
+
+
 def test_explicit_official_attestation_persistence_and_target_admission(engine, packet):
     packet = official_test_declaration(packet)
     row = import_research_dataset(engine, packet)

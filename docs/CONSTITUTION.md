@@ -25,5 +25,5 @@
 23. Feature、赛果、赛后统计和可见性凭据不得 UPDATE/DELETE；纠错追加事实或升级版本。PostgreSQL 是生产 Schema 基准，SQLite 快测不能代替 PostgreSQL 验证。
 
 历史 Phase 0–3 禁止预测、P_model / P_final、BUY / WATCH / PASS、投注金额、串关、实时比分、滚球、自动投注，该约束保留为历史范围记录。
-当前只授权 P4-0 / P4-1 / P4-2 文档、赛后事实和 Feature 基础设施。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；P4-3 及以后等待另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
+当前已授权 P4-0～P4-3 文档、赛后事实、Feature 基础设施和仅消费冻结 Feature 的市场定价基准；Market Snapshot 同样数据库级 append-only。禁止 CORE/WATCH/PASS、EV 推荐、串关、LLM 推荐、自动投注和最终预测模型；P4-4 及以后等待另行授权。赛后 FINAL 事实不属于实时比分或滚球服务。
 演示样例必须包含 mock=true，生产环境不允许启用演示。

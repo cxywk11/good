@@ -1,6 +1,6 @@
 # Phase 4 — Prediction & Recommendation Engine
 
-本轮只交付 P4-0、P4-1、P4-2。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
+已交付 P4-0～P4-3；P4-3 Market Probability Baseline 规范见文末，前文保留 P4-0～P4-2 的基础设施与历史验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查
 
@@ -98,9 +98,9 @@ tests/test_results.py 覆盖 Raw-first、幂等重放/追加纠错、无部分�
 - V1 读取可见比赛版本和映射审计，过去统计还逐条校验版本；尚未提供有界赛季窗口/大表性能优化。生产扩容前需 EXPLAIN/压测。
 - 真实赛果/统计来源、新闻/阵容来源、模型、模型注册/回测产品均未实现或验收。比分冲突按来源分别保留，未做跨源裁决。
 - 时间同步、受限数据库角色、依赖锁及工件归档属于上线要求；超级用户绕过触发器不属于应用保证范围。
-- Phase 1 的真实数据、Docker/Redis 阻塞仍存在。P4-3 未实施。
+- Phase 1 的真实数据、Docker/Redis 阻塞仍存在，Market Baseline 不关闭这些 Gate。
 
-## 实测结果（2026-10-01，北京时间）
+## P4-0～P4-2 实测结果（2026-10-01，北京时间）
 
 | 项目 | 结果 |
 | --- | --- |
@@ -118,7 +118,7 @@ tests/test_results.py 覆盖 Raw-first、幂等重放/追加纠错、无部分�
 
 本机明细输出（artifacts 被 Git 忽略）：phase4-postgres-tests.txt、phase4-local-migration.json、phase4-api-smoke.json。实际 API 演示快照质量分 40；未把缺失的海外映射/陈旧来源提升到满分。
 
-## 本轮文件清单
+## P4-0～P4-2 历史文件清单
 
 修改 15 个已有文件：
 
@@ -156,4 +156,94 @@ tests/test_results.py 覆盖 Raw-first、幂等重放/追加纠错、无部分�
 - tests/test_features.py
 - tests/test_results.py
 
-未修改旧 odds.py、jobs.py 或 001～006 Migration；既有赔率及任务语义保留。P4-3 及之后的工作未实施。
+以上为 P4-0～P4-2 的历史交付记录，未修改旧 odds.py、jobs.py 或 001～006 Migration；既有赔率及任务语义保留。
+
+## P4-3 Market Probability Engine
+
+仅回答“市场当前如何定价”，建立 `P_market` 基准，不实施 P4-4 或任何预测、推荐、Edge、EV、串关、LLM、新闻搜索、自动投注功能。
+
+数据流为 `Raw/Odds → 原 P4-2 FeatureSnapshot @ analysis_cutoff → market-v1 → MarketModelSnapshot`。纯计算 `analysis/market.py:build_market_data` 只接收冻结 FeatureData；持久化 `analysis/market_snapshots.py:get_or_create_market_snapshot` 只按 ID 读取一个 FeatureSnapshot、查找或追加 MarketSnapshot。创建时间、随机 UUID 只用于行身份，不参与 market_data。没有回查当前赔率/比赛/Provider，没有更新旧 Feature。
+
+### 固定算法与数值规则
+
+`MARKET_MODEL_VERSION="market-v1"`，`NORMALIZATION_METHOD="proportional-v1"`；API 不接受任意版本，服务拒绝未实现版本，当前只支持 p4-features-v1 输入。
+
+```text
+q_i = 1 / decimal_odds_i
+overround = Σq_i
+vig = overround - 1
+no_vig_i = q_i / overround
+```
+
+使用独立 Decimal Context（50 位精度，ROUND_HALF_EVEN），拒绝 float 核心输入。计算后的概率、overround、vig、gap、变化以 24 位小数字符串编码；原始赔率保持 Feature 中的字符串。内部概率和误差必须 ≤1e-45，序列化后允许 ≤1e-23。不强制将最后一项改写为残差。
+
+negative vig 原样保存，并标注 `NEGATIVE_OVERROUND`；overround 严格大于 1.20 标注 `HIGH_OVERROUND`。阈值随 market-v1 固定，只作诊断、不删除数据或改变等权。均值、中位数、总体标准差使用支持 Decimal 的 Python statistics 标准库。任何实质规则变更须新增版本并保留旧版本工件。
+
+### 支持范围及完整性
+
+| market_type | 完整选项 | line 规则 |
+| --- | --- | --- |
+| 1X2 | HOME/DRAW/AWAY | NULL |
+| SPORTTERY_HAD | HOME/DRAW/AWAY | NULL，仅 provider=sporttery |
+| ASIAN_HANDICAP | HOME/AWAY | HOME=line，AWAY=-line，按 canonical_home_line 配对 |
+| TOTALS | OVER/UNDER | 同一非负 line |
+| SPORTTERY_HHAD | HOME/DRAW/AWAY | 同一体彩让球 line，不翻转 AWAY |
+| SPORTTERY_TTG | 0/1/2/3/4/5/6/7+ | NULL，八项全部存在 |
+
+每个 provider + bookmaker + market_type + canonical_line 独立分组，每项恰好一条。缺项保留 `MISSING_SELECTION:...`，重复、额外选项、混合映射绑定、非法 odds/line 同样不能形成完整市场。缺项不从别家公司或别的玩法补齐，也不归一剩余选项；overround/vig/no-vig 为 NULL，逐项合法 raw implied 仍保留。
+
+亚洲盘明确验证 `away_line == -home_line`。例如 HOME -0.5 和 AWAY +0.5 归入 -0.5；HOME -0.5 和 AWAY -0.5 分属两个不完整分组，输出 `HANDICAP_LINE_MISMATCH`。同时存在多个合法 canonical line 时分别计算。TOTALS 不同 line 也分开。二项盘口仅是价格去水；涉及走盘、半赢半输时不是完整结算概率。
+
+亚洲盘与 HHAD 三项不互转；TOTALS 与 TTG 八项不互转。`SPORTTERY_CRS`、`SPORTTERY_HAFU`、`CORRECT_SCORE` 及未知市场标记 `unsupported_for_v1=true` / `UNSUPPORTED_FOR_V1`，原始赔率保留，不崩溃、不去水。
+
+### 外部共识、体彩和变化
+
+外部共识只取 `provider != sporttery && market_type == 1X2 && complete`。每个完整 `(provider, bookmaker)` source 先去水，再等权算 HOME/DRAW/AWAY 的 arithmetic mean（`external_consensus.p_market`）。保留来源列表和 source_count，逐项输出 mean/median/min/max/population_stddev；不造冲突分。无来源时统计和 p_market 为 NULL。体彩即使标为 1X2 也被排除。
+
+跨 Provider 同名 bookmaker 不去重；可能重复覆盖同一真实公司，V1 不声称已经实体消歧。没有 sharp 权重，也不因 vig 异常改变权重。
+
+`sporttery.HAD/HHAD/TTG` 是各自来源市场数组，缺失为 []。只有同时存在外部共识和唯一完整 Sporttery HAD 来源时，输出 `sporttery_external_gap[selection] = external_consensus.mean - sporttery_HAD.no_vig`；否则 NULL。多个完整 HAD 来源额外给出 `AMBIGUOUS_SPORTTERY_HAD`，不任意选择。字段不叫 Edge。
+
+movement 按 Feature 冻结的 odds_movement.items 与 quote ID 关联，输出：
+
+- odds_delta = current_odds - previous_odds。
+- odds_pct_delta = odds_delta / previous_odds × 100，单位 percent。
+- raw_implied_probability_delta = 1/current_odds - 1/previous_odds。
+
+缺 previous 时三个字段均为 NULL，不补 0。每个 selection 的 previous 独立，不能推断同刻历史市场，因此没有 previous_market_probability 或 no-vig 历史变化。
+
+### 持久化与 API
+
+迁移 `008_market_probability` 新增 market_model_snapshots：UUID id/match_id/feature_snapshot_id、analysis_cutoff、market_model_version、normalization_method、JSONB market_data、mock、created_at。唯一键 `(feature_snapshot_id, market_model_version)`；复用 immutability helper 在 PostgreSQL/SQLite 拒绝 UPDATE/DELETE。INSERT ON CONFLICT DO NOTHING 后读回胜者，重复及并发请求幂等。Schema 详见 DATA_MODEL。
+
+`GET /api/v1/matches/{match_id}/market-model?analysis_cutoff=<带时区时间>`
+
+沿用 success/data/request_id 信封，data 返回 market_snapshot_id、feature_snapshot_id、match_id、UTC analysis_cutoff、market_model_version、normalization_method、market_data、mock。cutoff 必填；无时区、未来、达到/超过当时开球时刻为 422；当时没有已证明可见比赛、ID 不存在或 Mock/live 不符为 404。
+
+API 先调用原有 get_or_create_snapshot，再传 Feature ID 给 Market 服务。首次 GET 可物化两张快照；已存在 Feature 直接复用。服务无当前 Match 查询，无未来数据补齐。P4-2 的 analysis_visibility 和读取规则保持；原有 ORM commit 后扫描仍是已知技术债。
+
+### P4-3 验证
+
+`tests/test_market_model.py` 覆盖 Decimal 及环境精度隔离、完整性、去水/共识/统计、跨公司与跨 Provider 身份、体彩排除与 gap、盘口规范化、TTG 完整性、异常与不支持市场、逐项变化、冻结输入不变、SQL 读取边界、幂等并发、API/cutoff/模式隔离、数据库不可变性、唯一性和 008↔007 迁移往返。P4-2 tests/test_features.py、test_odds.py、test_results.py 纳入全量回归。
+
+实测结果（2026-10-01，北京时间）：
+
+| 项目 | 结果 |
+| --- | --- |
+| SQLite 全量 pytest | 179 passed，74.91 秒；原 118 项 + 新增 Market 61 项 |
+| PostgreSQL 全量 pytest | 独立 PostgreSQL 17 实例（127.0.0.1:55433）空库 jc_market_test：179 passed，74.33 秒 |
+| 迁移及 Alembic check | 两种数据库均通过 008 → 007 → head，以及全链 upgrade/head；PG 每个数据库用例结束 downgrade/base；迁移用例内 command.check 通过，无 Schema 差异 |
+| PostgreSQL 生产类型 | market_data=JSONB；唯一约束、FK、不可变触发器均通过集成测试 |
+| Ruff | apps/api/src、tests、008 migration、immutability helper：通过 |
+| mypy | 34 个源文件通过 |
+| 前端回归 | npm run test：1 passed；npm run build：通过 |
+| 数据边界 | SQL 监听测试确认 Market 服务只按键读 Feature / Market Snapshot；后续报价、比赛改期、Provider 状态变化不影响旧 Feature 的派生结果 |
+| 旧底座 | features.py、visibility.py、odds.py、001～007 migrations 和原 Feature/Odds/Results 测试未修改，全部纳入回归 |
+
+两套 pytest 均保留现有一条 Starlette/httpx 弃用警告；前端构建仍有大 chunk 提示。没有新增依赖，没有压制告警或跳过失败项。日志位于本机 artifacts/market-sqlite-tests.txt 和 artifacts/market-postgres-tests.txt（Git 忽略）。
+
+本机原 55432 演示实例进程存在但连接无响应；本轮未重启、未迁移演示库，也未宣称运行中的演示 API 已部署 008。为完成真实 PostgreSQL 测试，使用已有程序创建独立测试实例；完成后停止该实例，保留日志。上线/本机演示应用新接口前仍须在目标库执行 `alembic upgrade head` 并加载新 API 代码。
+
+P4-3 文件清单（14 个）：修改 README.md、analysis/contracts.py、api.py、models.py、docs/ARCHITECTURE.md、BACKLOG.md、CONSTITUTION.md、DATA_MODEL.md、PHASE4_SPEC.md；新增 analysis/market.py、analysis/market_snapshots.py、migrations/versions/008_market_probability.py、tests/test_market_model.py、docs/DECISIONS/ADR-009-market-probability-baseline.md。Python 源码相对根均为 apps/api/src/jc。
+
+真实 Provider、Docker/Redis 验收仍未完成。下一阶段只建议先评审本阶段和真实数据 Gate，再单独授权 P4-4；本轮没有实施 P4-4。

@@ -110,6 +110,39 @@ def features(match_id: UUID, request: Request, analysis_cutoff: datetime, db: Se
     )
 
 
+@router.get("/matches/{match_id}/market-model")
+def market_model(match_id: UUID, request: Request, analysis_cutoff: datetime, db: Session = Depends(get_db)):
+    from jc.analysis.contracts import MarketSnapshotOutput
+    from jc.analysis.features import MatchNotVisible, get_or_create_snapshot
+    from jc.analysis.market_snapshots import FeatureNotFound, get_or_create_market_snapshot
+
+    # The feature boundary determines historical identity/mode. Do not read the current Match row.
+    try:
+        cutoff = as_utc(analysis_cutoff)
+        if cutoff > utcnow():
+            raise ValueError("analysis_cutoff cannot be in the future")
+        feature = get_or_create_snapshot(db, str(match_id), cutoff, mock=get_settings().demo_mode)
+        row = get_or_create_market_snapshot(db, feature.id, mock=get_settings().demo_mode)
+    except (MatchNotVisible, FeatureNotFound) as exc:
+        raise HTTPException(404, str(exc)) from None
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    db.commit()
+    return ok(
+        request,
+        MarketSnapshotOutput(
+            market_snapshot_id=row.id,
+            feature_snapshot_id=row.feature_snapshot_id,
+            match_id=row.match_id,
+            analysis_cutoff=row.analysis_cutoff,
+            market_model_version=row.market_model_version,
+            normalization_method=row.normalization_method,
+            market_data=row.market_data,
+            mock=row.mock,
+        ).model_dump(mode="json"),
+    )
+
+
 @router.get("/matches/{match_id}")
 def detail(
     match_id: UUID, request: Request, analysis_cutoff: datetime | None = None, db: Session = Depends(get_db)

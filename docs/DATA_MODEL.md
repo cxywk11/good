@@ -57,3 +57,23 @@ erDiagram
 Phase 4 迁移 007_feature_foundation 追加 match_results、team_match_stats、feature_snapshots、analysis_visibility，当前共七个顺序迁移。四表均数据库级 append-only，引用旧 UUID/Raw/比赛版本/映射而不重建旧表。赛后表保存 observed_at、finished_at、created_at 和可空源时间；Feature 的 JSON 在 PG 为 JSONB，唯一键为比赛/cutoff/版本；可见性凭据按不可变表名/行 UUID 唯一，证明独立连接读到已提交事实的最早已记录时间。完整字段/约束和可见性边界见 PHASE4_SPEC。
 
 重点索引包括 `(match_id, provider, market_type, collected_at)`、`(match_id, collected_at, created_at)`、观察时间、销售日、开球时间、映射状态及 `(entity_type, entity_id, created_at)`。当前使用窗口查询取得 latest，未建立会丢历史的覆盖表。
+
+## P4-3 Market Snapshot
+
+迁移 `008_market_probability`（前置 `007_feature_foundation`）仅增加 `market_model_snapshots`，当前共八个顺序迁移。旧 Feature 内容和约束不变。
+
+| 字段 | PostgreSQL 类型 / 约束 |
+| --- | --- |
+| id | UUID 主键 |
+| match_id | UUID NOT NULL，FK → matches.id；从 Feature 复制，不读当前 Match |
+| feature_snapshot_id | UUID NOT NULL，FK → feature_snapshots.id |
+| analysis_cutoff | timestamptz NOT NULL，从 Feature 复制 |
+| market_model_version | varchar(60) NOT NULL，当前 market-v1 |
+| normalization_method | varchar(60) NOT NULL，当前 proportional-v1 |
+| market_data | JSONB NOT NULL；SQLite 为 JSON |
+| mock | boolean NOT NULL，从 Feature 复制 |
+| created_at | timestamptz NOT NULL，仅为物化时间，不参与计算 |
+
+唯一约束 `uq_market_feature_version(feature_snapshot_id, market_model_version)` 支持幂等和并发；`market_not_future` 检查 cutoff ≤ created_at。复用 immutability helper 创建 UPDATE / DELETE 拒绝触发器，不设级联删除。降级 008 → 007 仅移除 Market 表及其触发器，不改 Feature、报价或可见性历史。
+
+`market_data` 保存来源市场、完整性、逐项原始/去水概率、overround/vig、外部共识、体彩独立分布、概率差、单序列变化及 diagnostics。核心小数全部存字符串。source identity 是 provider + bookmaker；跨 Provider 同一真实公司可能重复覆盖，V1 不自动实体消歧或去重。

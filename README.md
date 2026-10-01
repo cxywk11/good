@@ -1,6 +1,6 @@
 # 竞彩智研 / JC Football Intelligence
 
-Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追加赔率、审核后台和历史曲线。已增加 Phase 4 的 P4-0～P4-2：赛后事实 Contract、不可变 Feature Snapshot 与严格 cutoff 基础设施。没有最终预测模型或投注推荐。
+Phase 0–3 数据底座保持：体彩主比赛池、UUID 实体映射、只追加赔率、审核后台和历史曲线。已增加 Phase 4 的 P4-0～P4-3：赛后事实 Contract、不可变 Feature Snapshot、严格 cutoff 基础设施和仅消费冻结 Feature 的 Market Probability Baseline。没有最终预测模型或投注推荐。
 
 **交付状态：可运行的 Mock 演示已打通真实 PostgreSQL；真实当日体彩与海外账号数据、完整 Docker/Redis 运行验收尚未完成。** 详见 [验收报告](docs/PHASE1_ACCEPTANCE.md)。
 
@@ -65,6 +65,6 @@ PostgreSQL 集成测试：设置 `TEST_DATABASE_URL` 指向**空的独立测试�
 - [实际数据源与接入配置](docs/PROVIDERS.md)、[实体映射](docs/ENTITY_RESOLUTION.md)
 - [赔率与时间语义](docs/ODDS_STORAGE.md)、[开发硬性规则](docs/CONSTITUTION.md)
 - [验收报告](docs/PHASE1_ACCEPTANCE.md)、[运维](docs/OPERATIONS.md)、[待办与技术债](docs/BACKLOG.md)
-- [Phase 4 范围、Feature API、时间可见性及质量算法](docs/PHASE4_SPEC.md)
+- [Phase 4 范围、Feature / Market API、时间可见性及计算规则](docs/PHASE4_SPEC.md)
 
 没有配置 Git 远端或发布外部网站；项目文件保存在当前工作区。

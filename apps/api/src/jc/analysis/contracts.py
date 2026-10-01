@@ -29,3 +29,14 @@ class FeatureSnapshotOutput(BaseModel):
     feature_version: str
     feature_data: FeatureData
     data_quality_score: int = Field(ge=0, le=100)
+
+
+class MarketSnapshotOutput(BaseModel):
+    market_snapshot_id: str
+    feature_snapshot_id: str
+    match_id: str
+    analysis_cutoff: datetime
+    market_model_version: str
+    normalization_method: str
+    market_data: dict[str, Any]
+    mock: bool

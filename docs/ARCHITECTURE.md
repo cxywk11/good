@@ -50,3 +50,17 @@ Raw 在独立事务提交后才解析；验证失败时业务事务回滚，Raw 
 认证入口在 Argon2 校验前调用 auth_limits.py。PG 原子 UPSERT 有条件递增配额，限流预算先独立提交，随后 401/409 不会撤回计数；Redis 故障时仍有数据库限流保护。短期桶仅保存带服务密钥的 HMAC 标识，过期清理，不记录原始邮箱、IP 或密码。数据来源限流仍由 Redis 承担，两个边界互不替代。
 
 P4 的 results.py 消费统一 FINAL/REGULATION Contract，继续 Provider → Raw → Normalize → Validate → Store，不建新调度或服务。analysis/visibility.py 在提交后通过独立连接确认不可变输入可见，analysis/features.py 同时检查这些凭据、业务/Raw 时间、历史 MatchVersion 和映射审计，输出独立 append-only FeatureSnapshot。详情展示 API 的历史语义未改；不能将其直接当 Feature 输入。规则及旧数据保守边界见 PHASE4_SPEC。
+
+P4-3 增加 `analysis/market.py` 纯 Decimal 计算和 `analysis/market_snapshots.py` 持久化边界：
+
+```text
+Raw / Odds → 原有 Feature 构建器 @ analysis_cutoff → 不可变 FeatureSnapshot
+                                                     ↓ 仅冻结 JSON
+                                              market-v1 纯计算
+                                                     ↓
+                                          不可变 MarketModelSnapshot
+```
+
+Market 服务只按 ID 读取一个 FeatureSnapshot，并按 `(feature_snapshot_id, market_model_version)` 查找或追加结果；不查询赔率、当前比赛、比赛版本、Provider 状态或 API。复用 odds.py 的通用 INSERT 去重 helper，该 helper 不查询赔率。API 先调用原有 Feature 服务，再调用 Market 服务；原有 ORM after_commit 可见性扫描不变，Market 不增加历史扫描。
+
+V1 每个 `(provider, bookmaker)` 独立验证完整性、proportional 去水，外部完整 1X2 等权形成 `P_market`。体彩完全排除于外部共识，只输出自身定价及与外部均值之差。亚洲二项盘口和体彩 HHAD 三项、TOTALS 和体彩 TTG 八项各自独立；不做概率空间转换。无预测、推荐或 EV。详见 [ADR-009](DECISIONS/ADR-009-market-probability-baseline.md)。

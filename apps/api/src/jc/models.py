@@ -387,3 +387,18 @@ class FeatureSnapshot(Identity, Base):
         CheckConstraint("data_quality_score BETWEEN 0 AND 100", name="valid_feature_quality"),
         CheckConstraint("analysis_cutoff <= created_at", name="feature_not_future"),
     )
+
+
+class MarketModelSnapshot(Identity, Base):
+    __tablename__ = "market_model_snapshots"
+    match_id: Mapped[str] = mapped_column(ForeignKey("matches.id"))
+    feature_snapshot_id: Mapped[str] = mapped_column(ForeignKey("feature_snapshots.id"))
+    analysis_cutoff: Mapped[datetime] = mapped_column(UTCDateTime())
+    market_model_version: Mapped[str] = mapped_column(String(60))
+    normalization_method: Mapped[str] = mapped_column(String(60))
+    market_data: Mapped[dict] = mapped_column(Json)
+    mock: Mapped[bool] = mapped_column(default=False)
+    __table_args__ = (
+        UniqueConstraint("feature_snapshot_id", "market_model_version", name="uq_market_feature_version"),
+        CheckConstraint("analysis_cutoff <= created_at", name="market_not_future"),
+    )

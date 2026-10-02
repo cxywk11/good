@@ -1,5 +1,8 @@
 # 竞彩智研工程宪章
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> Phase acceptance records and status tables below are HISTORICAL SNAPSHOT; normative contracts are unchanged.
+
 1. 中国体育彩票实际开售竞彩足球比赛是系统主比赛池唯一入口。
 2. 外部供应商存在比赛但中国体彩未开售时，不得进入主比赛池。
 3. 外部供应商只能补充赔率、球队、阵容、统计等信息。

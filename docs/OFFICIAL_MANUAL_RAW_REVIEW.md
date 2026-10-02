@@ -1,5 +1,8 @@
 # 三份手工官方 Response 离线核验（2026-10-02）
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 **结论：BLOCKED_IDENTITY_AND_PROVENANCE_CONFLICT。** 三个文件均已实际读取、留存和校验，
 但 Fixed Bonus 与 Match Head 正文属于 **2041789／周三001／韩国亚–中国亚／2:1**，
 与用户提供的两个 `2041790` URL 及文件名冲突。列表内目标 **2041790／周三002** 则是

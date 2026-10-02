@@ -1,5 +1,8 @@
 # 2041790 Gate A 核验结果
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 | # | 项目 | 结果 |
 |---|---|---|
 | 1 | timezone evidence | 通过；两篇官方同页赛程/北京时间对应证据及官方 JS→页面字段映射，详见 [V1 证据文档](SPORTTERY_SCHEDULE_TIME_V1.md) |

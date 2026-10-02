@@ -1,5 +1,8 @@
 # Open Source Gap Analysis
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 审计基准：2026-10-02，good main `52e9497a1c532270100bc32e5f63ccd8bbd07603`。本文件按能力而非仓库组织；证据位置、20库评分、许可与源码链接见 [主审计](OPEN_SOURCE_AUDIT.md)，横向状态见 [能力矩阵](OPEN_SOURCE_CAPABILITY_MATRIX.md)。文中的建议均未实施。
 
 ## 1. Data Acquisition / 大规模历史来源

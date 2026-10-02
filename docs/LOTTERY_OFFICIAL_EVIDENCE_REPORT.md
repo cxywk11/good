@@ -1,5 +1,8 @@
 # P4-4D2B.4 Official lottery.gov.cn Evidence Qualification
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 核验日期：2026-10-02（Asia/Shanghai）。**Gate A / Gate C / Gate B 均为 BLOCKED。**
 官方页面确实能显示目标比赛和历史固定奖金；本机直接请求业务 API 得到 HTTP 567，
 目前没有可保存并核验的成功业务 JSON，不能用浏览器 DOM、截图或第三方响应替代。

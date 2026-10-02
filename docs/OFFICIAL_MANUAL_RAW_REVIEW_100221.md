@@ -1,5 +1,8 @@
 # 三份官方 Raw 更新核验（2026-10-02 10:02:21 +08:00）
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 > 后续已补足限定于 kickoff 的官方时区证据并完成 Gate A；见 [当前报告](SPORTTERY_GATE_A_REPORT.md)。
 > 本文保留当时的核验结果，原 Raw、manifest 和 review.json 不改写。
 

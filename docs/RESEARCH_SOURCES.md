@@ -1,5 +1,8 @@
 # P4-4D2B Historical Source Discovery
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 > 最新：2026-10-02，2041790 已经原 D2A 导入并 SEALED，Gate A PASS；Gate C/B 继续 BLOCKED。
 > kickoff 采用限定字段的 SPORTTERY_SCHEDULE_TIME_V1；publication timezone 仍 UNVERIFIED。
 > 见 [Gate A 核验结果](SPORTTERY_GATE_A_REPORT.md)。以下保留较早阶段的探测事实和阻塞状态。

@@ -1,5 +1,8 @@
 # VIPC 单场 1X2 历史证据核验
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 核验日：2026-10-01。范围固定为 VIPC `498257749`、韩国 U23 vs 中国 U23、
 公司 `432`（后台显示 `香港**`；用户描述 `香港***`）、European 1X2。
 **技术上值得保留为新浪之外的第二候选源；当前 source decision 为 UNVERIFIED，尚不能正式接入 Replay。**

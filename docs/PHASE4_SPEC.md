@@ -1,5 +1,8 @@
 # Phase 4 — Prediction & Recommendation Engine
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> Phase acceptance records and status tables below are HISTORICAL SNAPSHOT; normative contracts are unchanged.
+
 已交付并人工复核 P4-0～P4-3、P4-4A Score Probability Mathematics、P4-4B1 Goals Baseline Lambda Estimator 与 P4-4C Model Evaluation Core；P4-4D1 Research Replay Semantics Core 主体已完成人工复核，P4-4D1.1 验收前正确性修复已实施，待本轮人工验收后冻结 v1。当前研究规范见文末，前文保留各历史阶段的规范与验收记录。没有 CORE/WATCH/PASS、EV、串关、LLM、自动投注或最终预测模型；没有真实赛果/统计 Provider 线上验收声明。
 
 ## 先行架构审查

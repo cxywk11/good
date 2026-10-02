@@ -1,5 +1,8 @@
 # Open Source Reuse Plan
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 日期2026-10-02；基准good main `52e9497a1c532270100bc32e5f63ccd8bbd07603`。**本轮只交付方案；新增生产/开发依赖均为0，下面实施项等待人工复核后的另一次授权。** 不自动开始集成。源码与风险证据见 [Audit](OPEN_SOURCE_AUDIT.md)，按能力缺口见 [Gap Analysis](OPEN_SOURCE_GAP_ANALYSIS.md)。
 
 ## P0 — Now：先确定基准、边界与准入

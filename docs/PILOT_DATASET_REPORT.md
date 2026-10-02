@@ -1,5 +1,8 @@
 # P4-4D2B.1 Source Unblock & Real Evidence Intake
 
+> Current status: [docs/RESEARCH_CURRENT_STATE.json](RESEARCH_CURRENT_STATE.json).
+> HISTORICAL SNAPSHOT: the report and its machine tables below retain their original observations.
+
 > 最新单场官方 Pilot：2041790 的 Gate A PASS，`jc-football-official-pilot` 已 SEALED。
 > Gate C/B 与全部 Replay cutoff 继续 BLOCKED；见 [当前报告](SPORTTERY_GATE_A_REPORT.md)。
 > 下文为较早阶段历史报告，原始来源决策不回写。

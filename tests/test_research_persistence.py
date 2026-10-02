@@ -844,6 +844,87 @@ def test_kickoff_only_attestation_seals_match_only_without_unlocking_replay(engi
             build_research_feature(loaded, "target", ReplayCutoffSpec(minutes))
 
 
+@pytest.mark.parametrize("match_publication_verified", [False, True])
+def test_synthetic_54_had_roundtrip_keeps_versions_and_match_availability_separate(
+    engine, packet, match_publication_verified,
+):
+    from jc.analysis.research_replay import NotReplayable
+    from jc.research.pilot import assess_intake_gates
+
+    # Capability control only: explicit synthetic aware instants, no real HAD
+    # timezone rule or real Match publication attestation is created here.
+    declared = official_test_declaration(packet)
+    source = declared.sources[-1]
+    source = replace(source, source=replace(source.source, source_name="sporttery"))
+    pool = replace(declared.raw_artifacts[-1], source_name="sporttery")
+    target = replace(
+        next(m for m in packet.dataset.matches if m.research_match_id == "target"), source="sporttery",
+        published_at=None, effective_at=None, replay_available_at=None, availability_basis=None,
+    )
+    provenance = ResearchRecordProvenance(
+        record_type="MATCH", record_id="target", source_name="sporttery", raw_content_hash=pool.content_hash,
+    )
+    base = ResearchImport(
+        dataset=replace(packet.dataset, dataset_version="synthetic-gate-a", matches=(target,), odds=(), results=(),
+                        source_manifest=(source.source,)),
+        description="Synthetic contract capability control; not a real source qualification.",
+        manifest={"synthetic": True}, sources=(source,), raw_artifacts=(pool,), provenance=(provenance,),
+        sporttery_verifications=(SportteryVerificationInput(
+            research_match_id="target", status="VERIFIED", artifact_source_name="sporttery",
+            artifact_content_hash=pool.content_hash,
+        ),),
+    )
+    original = import_research_dataset(engine, base)
+    first_publication = target.kickoff_at - timedelta(days=1)
+    instants = [first_publication + timedelta(minutes=20 * i) for i in range(18)]
+    raw = ResearchRawArtifactInput(
+        source_name="sporttery", artifact_type="SYNTHETIC_HAD_CAPABILITY_CONTROL",
+        retrieved_at=T, content_type="application/json",
+        payload={"synthetic": True, "declared_publication_instants": [stamp.isoformat() for stamp in instants],
+                 "prices": {"HOME": "2.1", "DRAW": "3.2", "AWAY": "3.4"}},
+    )
+    quotes = tuple(ResearchOddsQuote(
+        record_id=f"synthetic-had-{i}-{selection}", research_match_id="target", provider="sporttery",
+        bookmaker="Sporttery", market_type="SPORTTERY_HAD", selection=selection, line=None,
+        decimal_odds=Decimal(price), published_at=stamp, replay_available_at=stamp,
+        availability_basis=AvailabilityBasis.PROVIDER_PUBLISHED_AT,
+    ) for i, stamp in enumerate(instants) for selection, price in raw.payload["prices"].items())
+    if match_publication_verified:
+        target = replace(target, published_at=first_publication, replay_available_at=first_publication,
+                         availability_basis=AvailabilityBasis.PROVIDER_PUBLISHED_AT)
+    qualified = replace(
+        base, dataset=replace(base.dataset, dataset_version="synthetic-had", matches=(target,), odds=quotes),
+        raw_artifacts=(pool, raw), provenance=(provenance, *(ResearchRecordProvenance(
+            record_type="ODDS", record_id=q.record_id, source_name="sporttery", raw_content_hash=raw.content_hash,
+        ) for q in quotes)),
+    )
+    with pytest.raises(DatasetConflict):
+        import_research_dataset(engine, replace(qualified, dataset=replace(
+            qualified.dataset, dataset_version=base.dataset.dataset_version,
+        )))
+    sealed = import_research_dataset(engine, qualified)
+    assert sealed["status"] == "SEALED" and sealed["content_hash"] == dataset_content_hash(qualified)
+    assert import_research_dataset(engine, qualified)["content_hash"] == sealed["content_hash"]
+    with engine.connect() as conn:
+        assert dataset_row(conn, original["id"]) == original
+        assert load_research_dataset(conn, base.dataset.dataset_id, base.dataset.dataset_version) == base.dataset
+        loaded = load_research_dataset(conn, qualified.dataset.dataset_id, qualified.dataset.dataset_version)
+        assert loaded == qualified.dataset and len(loaded.odds) == 54
+        assert all(isinstance(q.decimal_odds, Decimal) for q in loaded.odds)
+        assert verified_sporttery_targets(conn, sealed["id"]) == ("target",)
+    assert assess_intake_gates(qualified)["gates"] == {"A": "PASS", "B": "BLOCKED"}
+    assert not loaded.results  # Gate C cannot pass without a real finished_at-bearing Result.
+    for minutes in (360, 90, 30, 15, 5):
+        if match_publication_verified:
+            feature = build_research_feature(loaded, "target", ReplayCutoffSpec(minutes))
+            assert len(feature.market["quotes"]) == 3
+            assert build_market_data(feature)["external_consensus"]["source_count"] == 0
+        else:
+            assert loaded.matches[0].replay_available_at is loaded.matches[0].availability_basis is None
+            with pytest.raises(NotReplayable, match="MATCH_UNAVAILABLE_AT_CUTOFF"):
+                build_research_feature(loaded, "target", ReplayCutoffSpec(minutes))
+
+
 @pytest.mark.parametrize("fault", ["missing_evidence", "fixture_evidence"])
 def test_sql_cannot_mark_arbitrary_sporttery_id_verified(engine, packet, fault):
     with engine.begin() as conn:

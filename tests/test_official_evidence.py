@@ -78,6 +78,11 @@ def test_waf_login_error_and_empty_are_invalid_evidence(tmp_path, body):
         "https://sporttery.cn:8080/history",
         "https://sporttery.cn/history#PRIVATE",
         "https://evil@sporttery.cn/history",
+        "https://lottery.gov.cn.example.com/history",
+        "https://www.lottery.gov.cn@evil.example/history",
+        "http://www.lottery.gov.cn/jc/zqsgkj/",
+        "https://unreviewed.lottery.gov.cn/history",
+        "https://appgw.sporttery.cn/history",
     ],
 )
 def test_untrusted_domain_http_and_credential_urls_rejected_before_raw(tmp_path, url):
@@ -90,6 +95,41 @@ def test_untrusted_domain_http_and_credential_urls_rejected_before_raw(tmp_path,
 def test_https_official_allowlist_is_not_automatic_verification(tmp_path, host):
     result = save_input(tmp_path, "{}", url=f"https://{host}/history")
     assert result["sporttery_verification_status"] == "UNVERIFIED"
+
+
+@pytest.mark.parametrize("host", ["lottery.gov.cn", "www.lottery.gov.cn"])
+@pytest.mark.parametrize("body", [
+    "<html><title>足球赛果开奖</title><table><tr><th>全场比分（90分钟）</th></tr></table></html>",
+    "<html><title>足球对阵详情</title><th>发布时间</th><td>{{obj.updateTime}}</td></html>",
+    '{"errorCode":0,"value":{"matchResult":[{"matchId":"SYNTHETIC",'
+    '"matchNumStr":"周三001","matchDate":"2026-09-30"}]}}',
+    '{"errorCode":0,"value":{"oddsHistory":{"hadList":[{"updateDate":"2026-09-30",'
+    '"updateTime":"11:02:17","h":"2.10","d":"3.20","a":"3.40"}]}}}',
+    "<html><title>访问验证</title>captcha</html>",
+])
+def test_lottery_page_or_expected_fields_cannot_certify_target_or_time(tmp_path, host, body):
+    # Synthetic boundary examples, NOT captured successful provider responses.
+    result = save_input(tmp_path, body, url=f"https://{host}/jc/zqsgkj/")
+    assert result["sporttery_verification_status"] == "UNVERIFIED"
+    assert result["inspection"]["verified_targets"] == []
+    assert result["inspection"]["replay_available_at"] is None
+    assert result["inspection"]["availability_basis"] is None
+    raw = json.loads(Path(result["raw_path"]).read_text("utf-8"))["raw"]
+    assert raw["payload"] == body
+    assert raw["metadata"]["response_sha256"] == hashlib.sha256(body.encode()).hexdigest()
+
+
+def test_lottery_qualification_manifest_keeps_official_source_unverified():
+    from jc.research.probe_manifest import manifest_counts
+
+    saved = json.loads(Path("docs/lottery-official-probe-manifest.json").read_text("utf-8"))
+    source = saved["source_registration"]
+    assert source["source"]["source_type"] == "OFFICIAL_SPORTTERY_HISTORY"
+    assert source["provider_name"] == "sporttery"
+    assert source["verification_status"] == "UNVERIFIED"
+    assert {r["source"] for r in saved["records"]} == {source["source"]["source_name"]}
+    assert manifest_counts(saved)["accepted_source_count"] == 0
+    assert all(r["evidence_decision"] != "ACCEPTED" for r in saved["records"])
 
 
 @pytest.mark.parametrize(

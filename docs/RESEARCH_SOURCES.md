@@ -1,5 +1,10 @@
 # P4-4D2B Historical Source Discovery
 
+> 2026-10-02 P4-4D2B.4：优先验证 lottery.gov.cn 的两场官方比赛；最新发现、
+> 18 份 HTTP Raw 及浏览器可见/业务 Raw 不可得的区别见
+> [LOTTERY_OFFICIAL_EVIDENCE_REPORT.md](LOTTERY_OFFICIAL_EVIDENCE_REPORT.md)。
+> 本轮 Gate A/C/B 均 BLOCKED，未创建 SEALED Dataset；暂停其他来源网络研究。
+
 > P4-4D2B.1 更新见末尾。本文件前半保留原 D2B 探测事实；当前数字与 Gate 状态以
 > `research-probe-manifest.json` 及 `PILOT_DATASET_REPORT.md` 的机器表为准。
 > VIPC 单场、单公司 1X2 核验见 [VIPC_SOURCE_REPORT.md](VIPC_SOURCE_REPORT.md)：已取得带完整日期的原始赔率列表，但时间语义与许可未通过准入。

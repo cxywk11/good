@@ -18,7 +18,13 @@ from jc.research.providers.inspection import inspect_sporttery_history_payload
 from jc.research.providers.probe import _save, public_url
 from jc.time import as_utc, parse_time, utcnow
 
-OFFICIAL_HOSTS = {"sporttery.cn", "www.sporttery.cn", "static.sporttery.cn", "webapi.sporttery.cn"}
+# lottery.gov.cn's saved HTML explicitly declares webApi/resDomain and the
+# Sporttery detail links. This allowlist establishes scope, never VERIFIED.
+# Evidence chain: docs/LOTTERY_OFFICIAL_EVIDENCE_REPORT.md (P4-4D2B.4).
+OFFICIAL_HOSTS = {
+    "lottery.gov.cn", "www.lottery.gov.cn",
+    "sporttery.cn", "www.sporttery.cn", "static.sporttery.cn", "webapi.sporttery.cn",
+}
 
 
 def validate_official_url(url: str) -> str:

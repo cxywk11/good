@@ -267,8 +267,8 @@ def test_current_state_reports_only_qualified_cutoffs_and_preserves_result_block
     state = json.loads(Path("docs/RESEARCH_CURRENT_STATE.json").read_text("utf-8"))
     admission = state["oddspapi_qualification"]
     assert state["gates"] == admission["gates"] == {"A": "PASS", "B": "PASS", "C": "BLOCKED"}
-    assert state["latest_dataset_version"] == admission["new_dataset_version"] == "2041790-external-1x2-v1"
-    assert state["latest_dataset_hash"] == admission["new_dataset_hash"]
+    assert admission["new_dataset_version"] == "2041790-external-1x2-v1"
+    assert state["frozen_dataset_checks"]["versions"]["2041790-external-1x2-v1"] == admission["new_dataset_hash"]
     assert admission["dataset_counts"] == {
         "verified_targets": 1,
         "sporttery_had_quotes": 54,

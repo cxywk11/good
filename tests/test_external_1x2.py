@@ -348,7 +348,7 @@ def test_current_single_target_state_keeps_time_license_and_gates_separate():
     assert state["gates"] == {"A":"PASS", "B":"PASS", "C":"BLOCKED"}
     assert state["finished_at"] is None and state["result_count"] == 0
     assert state["official_had_quote_count"] == 54 and state["verified_target_count"] == 1
-    assert state["market_model_data_status"] == "AVAILABLE_PARTIAL_CUTOFFS"
+    assert state["market_model_data_status"] == "AVAILABLE_ALL_FIXED_CUTOFFS"
     assert state["market_evaluation_status"] == "NOT_EVALUABLE"
     for minutes in CUTOFFS:
         cutoff = audit["cutoffs"][f"T-{minutes}"]

@@ -1,7 +1,7 @@
-"""Evidence-only HAD audit: no publication timezone or Match availability attested.
+"""Unqualified evidence-only HAD audit; this function never attests a timezone.
 
-The official frontend proves the publication label, not its timezone. There is
-no accepted publication normalization rule; do not reuse the kickoff rule.
+The official frontend proves the publication label, not its timezone. Applying
+the separate user-attested rule requires sporttery_had_time; never reuse kickoff.
 """
 
 import re

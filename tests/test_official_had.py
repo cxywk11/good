@@ -135,17 +135,20 @@ def test_wrong_response_identity_and_schema_rejected(change):
 def test_current_state_matches_real_qualification_without_changing_historical_snapshot():
     state = json.loads(Path("docs/RESEARCH_CURRENT_STATE.json").read_text("utf-8"))
     qualification = json.loads(Path("docs/official-had-qualification.json").read_text("utf-8"))
+    current = json.loads(Path(state["qualification_report"]).read_text("utf-8"))
     baseline = json.loads(Path("docs/sporttery-gate-a-result.json").read_text("utf-8"))
     assert state["gates"] == qualification["gates"] == {"A": "PASS", "B": "BLOCKED", "C": "BLOCKED"}
     assert state["verified_target_count"] == 1
-    assert state["latest_dataset_hash"] == baseline["dataset_hash"] == qualification["old_dataset_hash_after"]
-    assert state["latest_dataset_version"] == "2041790-gate-a-v1"
+    assert baseline["dataset_hash"] == qualification["old_dataset_hash_after"]
+    assert state["latest_dataset_hash"] == current["latest_dataset_hash"]
+    assert state["latest_dataset_version"] == current["latest_dataset_version"]
     assert qualification["new_dataset_created"] is False
     assert qualification["publication_evidence_version"] is None
     assert qualification["had"]["row_count"] == qualification["had"]["complete_row_count"] == 18
     assert qualification["had"]["price_value_count"] == 54
-    assert qualification["had"]["quote_record_count"] == state["official_had_quote_count"] == 0
+    assert qualification["had"]["quote_record_count"] == 0
+    assert current["had"]["quote_record_count"] == state["official_had_quote_count"]
     assert qualification["old_dataset_unchanged"] and qualification["frozen_files_unchanged"]
-    assert state["publication_timezone"] == state["match_availability_status"] == "UNVERIFIED"
-    assert state["official_had_replay_status"] == "REPLAY_STILL_BLOCKED"
+    assert qualification["publication_timezone"] == qualification["match_availability_status"] == "UNVERIFIED"
+    assert qualification["replay_status"] == "REPLAY_STILL_BLOCKED"
     assert all(item["classification"] == "HISTORICAL SNAPSHOT" for item in state["historical_snapshots"])

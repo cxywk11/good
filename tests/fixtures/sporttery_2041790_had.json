@@ -1,0 +1,218 @@
+{
+  "fixture_type": "OFFICIAL_RAW_EXCERPT",
+  "note": "Exact HAD subtree and identity excerpt for offline regression; not an independent source attestation. Production import revalidates the full saved Raw.",
+  "source_raw_content_hash": "ccd34ebdc92a32fe9fb7e589355e8d2252ebd14c844855ed00a889e76a1cd498",
+  "source_response_sha256": "5a2219730b1de410551ff84218ccee306ad3350fcc2d4fbbae069771899fc4ba",
+  "source_url": "https://webapi.sporttery.cn/gateway/uniform/football/getFixedBonusV1.qry?clientCode=3001&matchId=2041790",
+  "payload": {
+    "success": true,
+    "errorCode": "0",
+    "value": {
+      "oddsHistory": {
+        "matchId": 2041790,
+        "homeTeamId": 2053,
+        "awayTeamId": 2060,
+        "hadList": [
+          {
+            "a": "1.65",
+            "updateDate": "2026-09-29",
+            "df": "0",
+            "d": "3.35",
+            "af": "0",
+            "h": "4.45",
+            "updateTime": "09:55:48",
+            "hf": "0",
+            "goalLine": ""
+          },
+          {
+            "a": "1.61",
+            "updateDate": "2026-09-29",
+            "df": "1",
+            "d": "3.40",
+            "af": "-1",
+            "h": "4.70",
+            "updateTime": "19:56:15",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.58",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.45",
+            "af": "-1",
+            "h": "4.85",
+            "updateTime": "11:02:17",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.55",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.50",
+            "af": "-1",
+            "h": "5.05",
+            "updateTime": "11:10:28",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.53",
+            "updateDate": "2026-09-30",
+            "df": "0",
+            "d": "3.50",
+            "af": "-1",
+            "h": "5.25",
+            "updateTime": "11:18:14",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.51",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.57",
+            "af": "-1",
+            "h": "5.35",
+            "updateTime": "11:44:40",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.47",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.67",
+            "af": "-1",
+            "h": "5.65",
+            "updateTime": "12:12:26",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.44",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.75",
+            "af": "-1",
+            "h": "5.95",
+            "updateTime": "12:51:44",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.42",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "3.85",
+            "af": "-1",
+            "h": "6.05",
+            "updateTime": "13:02:29",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.40",
+            "updateDate": "2026-09-30",
+            "df": "0",
+            "d": "3.85",
+            "af": "-1",
+            "h": "6.45",
+            "updateTime": "13:35:59",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.37",
+            "updateDate": "2026-09-30",
+            "df": "1",
+            "d": "4.00",
+            "af": "-1",
+            "h": "6.70",
+            "updateTime": "14:02:27",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.38",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.95",
+            "af": "1",
+            "h": "6.60",
+            "updateTime": "14:34:17",
+            "hf": "-1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.40",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.85",
+            "af": "1",
+            "h": "6.45",
+            "updateTime": "15:01:24",
+            "hf": "-1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.42",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.80",
+            "af": "1",
+            "h": "6.20",
+            "updateTime": "15:57:07",
+            "hf": "-1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.44",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.72",
+            "af": "1",
+            "h": "6.00",
+            "updateTime": "16:28:52",
+            "hf": "-1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.45",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.66",
+            "af": "1",
+            "h": "6.00",
+            "updateTime": "16:48:02",
+            "hf": "0",
+            "goalLine": ""
+          },
+          {
+            "a": "1.45",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.56",
+            "af": "0",
+            "h": "6.30",
+            "updateTime": "17:26:49",
+            "hf": "1",
+            "goalLine": ""
+          },
+          {
+            "a": "1.47",
+            "updateDate": "2026-09-30",
+            "df": "-1",
+            "d": "3.45",
+            "af": "1",
+            "h": "6.30",
+            "updateTime": "17:50:30",
+            "hf": "0",
+            "goalLine": ""
+          }
+        ]
+      }
+    }
+  }
+}

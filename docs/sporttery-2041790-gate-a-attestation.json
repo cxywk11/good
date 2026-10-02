@@ -1,0 +1,77 @@
+{
+  "attestation_version": "SPORTTERY_2041790_GATE_A_V1",
+  "verifier": "Codex, explicit review of user-exported official Raw and directly fetched official timezone evidence; not a human signature",
+  "verified_at": "2026-10-02T02:22:21.017597+00:00",
+  "source_type": "OFFICIAL_SPORTTERY_HISTORY",
+  "source_name": "sporttery_history_offline",
+  "provider_name": "sporttery",
+  "verification_status": "VERIFIED",
+  "verification_note": "Explicit review for Sporttery 2041790 only: all three preserved user-exported response bodies pass byte/canonical hash, URL/body ID, match/team/score and pool membership consistency checks. Match 2041790, 周三002, 乌兹别亚-日本亚, Sporttery teams 2053/2060, regulation score 1:1. Kickoff is normalized under reviewed official source rule SPORTTERY_SCHEDULE_TIME_V1; publication timezone and finished_at remain unverified. This declaration relies on user-supplied provenance for API bodies, not an independent successful API fetch or official-domain-only inference.",
+  "license_note": "Public official material and user-exported bodies retained for this single-match local research pilot; no bulk-download or redistribution permission asserted.",
+  "raw_evidence": [
+    {
+      "canonical_sanitized_raw_hash": "ccd34ebdc92a32fe9fb7e589355e8d2252ebd14c844855ed00a889e76a1cd498",
+      "evidence_decision": "UNVERIFIED",
+      "http_status": null,
+      "local_artifact_relative_path": "artifacts/research-probes/20261002-manual-official-100221/20261002T020557488682Z-4a7b9d0cd7d24a6ab0466d9449bbaf61.json",
+      "probe_utc": "2026-10-02T02:02:21+00:00",
+      "public_url": "https://webapi.sporttery.cn/gateway/uniform/football/getFixedBonusV1.qry?clientCode=3001&matchId=2041790",
+      "response_sha256": "5a2219730b1de410551ff84218ccee306ad3350fcc2d4fbbae069771899fc4ba",
+      "retention": "UNCHANGED",
+      "schema_status": "JSON_OBSERVED_REVIEW_REQUIRED",
+      "source": "sporttery_history_offline",
+      "input_scan": "PASS"
+    },
+    {
+      "canonical_sanitized_raw_hash": "f0e91dcb65434a1fe328cd59705448df0d4518937ee748f3813b5f370301d87a",
+      "evidence_decision": "UNVERIFIED",
+      "http_status": null,
+      "local_artifact_relative_path": "artifacts/research-probes/20261002-manual-official-100221/20261002T020557510198Z-2cbd0f7807f34cab853e6219c26205fe.json",
+      "probe_utc": "2026-10-02T02:02:21+00:00",
+      "public_url": "https://webapi.sporttery.cn/gateway/uniform/football/getMatchHeadV1.qry?source=web&sportteryMatchId=2041790",
+      "response_sha256": "1c37916dc5de6f7f78248577e75073c8d99ed72e7a026cda0871035916019916",
+      "retention": "UNCHANGED",
+      "schema_status": "JSON_OBSERVED_REVIEW_REQUIRED",
+      "source": "sporttery_history_offline",
+      "input_scan": "PASS"
+    },
+    {
+      "canonical_sanitized_raw_hash": "17fa7a52216f267b541b4060993b73ece4fd67a77ad8db6519ff5a5c8f04ea79",
+      "evidence_decision": "UNVERIFIED",
+      "http_status": null,
+      "local_artifact_relative_path": "artifacts/research-probes/20261002-manual-official-100221/20261002T020557465242Z-e8d601df16e3485789c4770b716c9dce.json",
+      "probe_utc": "2026-10-02T02:02:21+00:00",
+      "public_url": "https://webapi.sporttery.cn/gateway/uniform/football/getUniformMatchResultV1.qry?matchBeginDate=2026-09-30&matchEndDate=2026-10-02&leagueId=&pageSize=30&pageNo=1&isFix=0&matchPage=1&pcOrWap=1",
+      "response_sha256": "af12eb1aa855b0a591b975a7b074f4728d51081a9e96d6e2a9c81400a9644ee6",
+      "retention": "UNCHANGED",
+      "schema_status": "JSON_OBSERVED_REVIEW_REQUIRED",
+      "source": "sporttery_history_offline",
+      "input_scan": "PASS"
+    }
+  ],
+  "timezone_evidence_version": "SPORTTERY_SCHEDULE_TIME_V1",
+  "timezone_evidence_manifest": "docs/sporttery-schedule-time-v1.json",
+  "kickoff_normalization": {
+    "raw_time": "2026-09-30 18:30",
+    "source_field": "getMatchHeadV1.value.matchDateTime",
+    "source_timezone_rule": "SPORTTERY_SCHEDULE_TIME_V1",
+    "source_timezone": "Asia/Shanghai",
+    "normalized_time": "2026-09-30T18:30:00+08:00",
+    "UTC": "2026-09-30T10:30:00Z",
+    "evidence_version": "SPORTTERY_SCHEDULE_TIME_V1"
+  },
+  "sporttery_pool_evidence": {
+    "sporttery_match_id": "2041790",
+    "home_team_id": "2053",
+    "away_team_id": "2060",
+    "kickoff_at": "2026-09-30T10:30:00+00:00"
+  },
+  "publication_timezone": "UNVERIFIED",
+  "published_at": null,
+  "replay_available_at": null,
+  "availability_basis": null,
+  "finished_at": null,
+  "dataset_key": "jc-football-official-pilot",
+  "dataset_version": "2041790-gate-a-v1",
+  "scope": "Exactly one Match/Target; results=(), odds=(); 18 HAD rows remain evidence-only."
+}

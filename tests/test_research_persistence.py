@@ -783,6 +783,67 @@ def test_explicit_official_attestation_persistence_and_target_admission(engine, 
     assert row["quality_summary"]["sporttery_target_verified_count"] == 1
 
 
+def test_kickoff_only_attestation_seals_match_only_without_unlocking_replay(engine, packet):
+    from jc.analysis.research_replay import NotReplayable
+    from jc.research.pilot import assess_intake_gates
+    from jc.research.sporttery_schedule_time import (
+        MATCH_HEAD_KICKOFF_FIELD,
+        SPORTTERY_SCHEDULE_TIME_V1,
+        normalize_sporttery_kickoff,
+    )
+
+    # Simulated attestation for the real D2A path; never counted as real evidence.
+    packet = official_test_declaration(packet)
+    source, raw = packet.sources[-1], packet.raw_artifacts[-1]
+    time = normalize_sporttery_kickoff(
+        "2026-09-30 18:30", source_field=MATCH_HEAD_KICKOFF_FIELD,
+        evidence_version=SPORTTERY_SCHEDULE_TIME_V1,
+    )
+    target = replace(
+        next(m for m in packet.dataset.matches if m.research_match_id == "target"),
+        source=source.source.source_name, kickoff_at=datetime.fromisoformat(time["normalized_time"]),
+        published_at=None, effective_at=None, replay_available_at=None, availability_basis=None,
+    )
+    expected = {
+        "sporttery_match_id": target.sporttery_match_id, "home_team_id": target.home_team_id,
+        "away_team_id": target.away_team_id, "kickoff_at": target.kickoff_at.isoformat(),
+    }
+    raw = replace(raw, metadata={"sporttery_pool_evidence": expected, "kickoff_normalization": time})
+    packet = validate_import(replace(
+        packet,
+        dataset=replace(packet.dataset, matches=(target,), odds=(), results=(),
+                        source_manifest=(source.source,)),
+        sources=(source,), raw_artifacts=(raw,),
+        provenance=(ResearchRecordProvenance(
+            record_type="MATCH", record_id="target", source_name=raw.source_name,
+            raw_content_hash=raw.content_hash,
+        ),),
+    ))
+    assert target.kickoff_at == datetime(2026, 9, 30, 10, 30, tzinfo=UTC)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        replace(target, kickoff_at=datetime(2026, 9, 30, 18, 30))
+    for key in expected:
+        bad_raw = replace(raw, metadata={"sporttery_pool_evidence": {**expected, key: "wrong"}})
+        with pytest.raises(ValueError, match="identify this match, teams and kickoff"):
+            validate_import(replace(packet, raw_artifacts=(bad_raw,)))
+    with pytest.raises(ValueError, match="explicitly verified official source"):
+        validate_import(replace(packet, sources=(replace(source, verification_status="UNVERIFIED"),)))
+    assert source.verification_status == packet.sporttery_verifications[0].status == "VERIFIED"
+    row = import_research_dataset(engine, packet)  # Calls existing seal_dataset in a second transaction.
+    assert row["status"] == "SEALED" and row["content_hash"] == dataset_content_hash(packet)
+    assert row["quality_summary"]["match_count"] == 1
+    assert row["quality_summary"]["result_count"] == row["quality_summary"]["odds_count"] == 0
+    with engine.connect() as conn:
+        loaded = load_research_dataset(conn, packet.dataset.dataset_id, packet.dataset.dataset_version)
+        assert verified_sporttery_targets(conn, row["id"]) == ("target",)
+    assert loaded == packet.dataset
+    assert assess_intake_gates(packet)["gates"] == {"A": "PASS", "B": "BLOCKED"}
+    assert not loaded.results  # Gate C has no finished_at-bearing REGULATION result.
+    for minutes in (360, 90, 30, 15, 5):
+        with pytest.raises(NotReplayable):
+            build_research_feature(loaded, "target", ReplayCutoffSpec(minutes))
+
+
 @pytest.mark.parametrize("fault", ["missing_evidence", "fixture_evidence"])
 def test_sql_cannot_mark_arbitrary_sporttery_id_verified(engine, packet, fault):
     with engine.begin() as conn:

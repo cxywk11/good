@@ -1,5 +1,9 @@
 # P4-4D2B.1 Source Unblock & Real Evidence Intake
 
+> 最新单场官方 Pilot：2041790 的 Gate A PASS，`jc-football-official-pilot` 已 SEALED。
+> Gate C/B 与全部 Replay cutoff 继续 BLOCKED；见 [当前报告](SPORTTERY_GATE_A_REPORT.md)。
+> 下文为较早阶段历史报告，原始来源决策不回写。
+
 结论：**BLOCKED**。已取得新浪单场带时间的真实外部赔率变动记录；仍未取得可验证的体彩官方目标，新浪数据也未完成正式 Replay 准入。完成离线 intake、响应检查和 Git-safe manifest 工具，停止在本阶段，不扩大三个赛季，不开始模型开发。
 
 ## 真实证据与逐项结果

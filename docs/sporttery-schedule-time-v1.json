@@ -1,0 +1,85 @@
+{
+  "evidence_version": "SPORTTERY_SCHEDULE_TIME_V1",
+  "status": "VERIFIED",
+  "reviewed_at": "2026-10-02T02:22:21.015595+00:00",
+  "reviewer": "Codex, explicit evidence review authorized by the user",
+  "source_timezone": "Asia/Shanghai",
+  "allowed_fields": [
+    "getMatchHeadV1.value.matchDateTime"
+  ],
+  "excluded_fields": [
+    "updateDate",
+    "updateTime",
+    "lastUpdateTime",
+    "finished_at",
+    "all other timestamp fields"
+  ],
+  "inference": "Consistent official same-page schedule/Beijing-time pairs establish the schedule kickoff wall-clock convention; the official frontend maps getMatchHeadV1.value.matchDateTime directly onto that display. This is a scoped source-level inference, not an offset supplied by each API row.",
+  "same_page_evidence": [
+    {
+      "url": "https://www.sporttery.cn/football/jcqz/2015/0605/161970.html",
+      "raw_path": "artifacts/research-probes/20261002-sporttery-schedule-time-v1/20261002T021734515534Z-61b83262dd8e40d48c8ecbcdc15c9dec.json",
+      "retrieved_at": "2026-10-02T02:17:34.494099+00:00",
+      "http_status": 200,
+      "retention": "UNCHANGED",
+      "response_sha256": "ce4a05569287506eff63543b12c22bf2bb64093b29976860f7f861e03a76d366",
+      "raw_content_hash": "cc3a8199d93dd496abb4a385b52f4d460dd36b4523c7573df346b9daa9363405",
+      "schedule_wall_time": "2015-06-05 12:00",
+      "beijing_text": "时间：北京时间6月5日12点",
+      "schedule_line": 282,
+      "beijing_line": 289
+    },
+    {
+      "url": "https://www.sporttery.cn/football/jcdj/2020/0804/608677.html",
+      "raw_path": "artifacts/research-probes/20261002-sporttery-schedule-time-v1/20261002T021735149845Z-2003539de43d4d548499b8d76c8f0e3f.json",
+      "retrieved_at": "2026-10-02T02:17:35.134522+00:00",
+      "http_status": 200,
+      "retention": "UNCHANGED",
+      "response_sha256": "b1f5bc5a890813bdcdf28a933b27c28ae8820881032ea6de75b607ef0ee04ea8",
+      "raw_content_hash": "2a5c1e06856d2da24677480b65dd88e5e0791b4135e2be5e23fc592b06e19086",
+      "schedule_wall_time": "2020-08-06 01:00",
+      "beijing_text": "北京时间8月6日凌晨1点",
+      "schedule_lines": [
+        70,
+        77
+      ],
+      "beijing_line": 65
+    }
+  ],
+  "field_mapping_evidence": [
+    {
+      "url": "https://static.sporttery.cn/res_1_0/jcw/default/jc/zqdz.js",
+      "raw_path": "artifacts/research-probes/20261002-lottery-qualification/20261002T000246849924Z-2c8419c6d18f48beaf7b20583c4d6c43.json",
+      "retrieved_at": "2026-10-02T00:02:46.845155+00:00",
+      "http_status": 200,
+      "retention": "UNCHANGED",
+      "response_sha256": "4bf8a73a1fabff504371e93cf0ae107222d41a404416041ebf51e58065f0905b",
+      "raw_content_hash": "9f7032c6714cace465abe4799b5965636c20f457d5e11b8a79297f5ec1f03b87",
+      "lines": [
+        77,
+        79,
+        85,
+        86,
+        87
+      ],
+      "observed": "getMatchHeadV1 response value is assigned directly to pageTitle"
+    },
+    {
+      "url": "https://www.sporttery.cn/jc/zqdz/index.html?showType=3&mid=2041790",
+      "raw_path": "artifacts/research-probes/20261002-lottery-qualification/20261002T000547727045Z-df40ee88cc68475194a3d7957ba0240e.json",
+      "retrieved_at": "2026-10-02T00:05:47.705227+00:00",
+      "http_status": 200,
+      "retention": "UNCHANGED",
+      "response_sha256": "928c56a2154458b7d074d853e05062eadaa06deb7cf61d53dd888e9f780d7fdf",
+      "raw_content_hash": "37aa262940800f3b931c5524847f789c1daaefda50898ecb4bc01a5b48c1f589",
+      "lines": [
+        116,
+        121,
+        130,
+        137
+      ],
+      "observed": "Match card displays pageTitle.matchDateTime.substring(0,16) with match number and teams; no timezone conversion"
+    }
+  ],
+  "publication_timezone": "UNVERIFIED"
+}

@@ -1,5 +1,8 @@
 # 三份官方 Raw 更新核验（2026-10-02 10:02:21 +08:00）
 
+> 后续已补足限定于 kickoff 的官方时区证据并完成 Gate A；见 [当前报告](SPORTTERY_GATE_A_REPORT.md)。
+> 本文保留当时的核验结果，原 Raw、manifest 和 review.json 不改写。
+
 **三 Raw 身份、球队、比分一致性 PASS；Gate A/C/B 仍 BLOCKED；没有创建或封存 Dataset。**
 本批已经解除此前的 2041789/2041790 错配。当前目标是 **2041790／周三002／乌兹别亚–日本亚／1:1**。
 HAD 实际 **18 条**，全部属于 2041790。kickoff 与发布时间仍缺充分的官方时区证据，真实 finished_at 也缺失。

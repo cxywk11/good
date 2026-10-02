@@ -201,8 +201,8 @@ def test_real_sealed_report_current_state_and_historical_hash_agree():
     assert state["publication_timezone_status"] == report["publication_timezone_status"] == "USER_ATTESTED"
     assert state["publication_timezone"] == "Asia/Shanghai"
     assert state["publication_evidence_version"] == SPORTTERY_HAD_PUBLISHED_TIME_V1
-    assert state["latest_dataset_version"] == report["latest_dataset_version"] == "2041790-official-had-v1"
-    assert state["latest_dataset_hash"] == report["latest_dataset_hash"]
+    assert state["official_had_dataset_version"] == report["latest_dataset_version"] == "2041790-official-had-v1"
+    assert state["frozen_dataset_checks"]["versions"]["2041790-official-had-v1"] == report["latest_dataset_hash"]
     assert report["old_dataset_hash"] == old["dataset_hash"] and report["old_dataset_unchanged"]
     assert report["dataset_status"] == "SEALED" and report["validate_import"] == "PASS"
     assert report["quality_summary"]["match_count"] == report["verified_target_count"] == 1
@@ -214,7 +214,8 @@ def test_real_sealed_report_current_state_and_historical_hash_agree():
     assert state["match_replay_available_at"] == evidence["replay_available_at"] == "2026-09-29T01:55:48+00:00"
     assert state["match_availability_basis"] == "PROVIDER_PUBLISHED_AT"
     assert report["replay_status"] == "PASS" and all(row["status"] == "PASS" for row in report["replay"].values())
-    assert state["gates"] == report["gates"] == {"A":"PASS","B":"BLOCKED","C":"BLOCKED"}
+    assert report["gates"] == {"A":"PASS","B":"BLOCKED","C":"BLOCKED"}
+    assert state["gates"] == {"A":"PASS","B":"PASS","C":"BLOCKED"}
     assert not report["market_model_evaluable"] and not report["external_consensus_available"]
     assert report["finished_at"] is None and not report["frozen_contract_modified"]
 

@@ -137,11 +137,12 @@ def test_current_state_matches_real_qualification_without_changing_historical_sn
     qualification = json.loads(Path("docs/official-had-qualification.json").read_text("utf-8"))
     current = json.loads(Path(state["qualification_report"]).read_text("utf-8"))
     baseline = json.loads(Path("docs/sporttery-gate-a-result.json").read_text("utf-8"))
-    assert state["gates"] == qualification["gates"] == {"A": "PASS", "B": "BLOCKED", "C": "BLOCKED"}
+    assert qualification["gates"] == {"A": "PASS", "B": "BLOCKED", "C": "BLOCKED"}
+    assert state["gates"] == {"A": "PASS", "B": "PASS", "C": "BLOCKED"}
     assert state["verified_target_count"] == 1
     assert baseline["dataset_hash"] == qualification["old_dataset_hash_after"]
-    assert state["latest_dataset_hash"] == current["latest_dataset_hash"]
-    assert state["latest_dataset_version"] == current["latest_dataset_version"]
+    assert state["frozen_dataset_checks"]["versions"]["2041790-official-had-v1"] == current["latest_dataset_hash"]
+    assert state["official_had_dataset_version"] == current["latest_dataset_version"]
     assert qualification["new_dataset_created"] is False
     assert qualification["publication_evidence_version"] is None
     assert qualification["had"]["row_count"] == qualification["had"]["complete_row_count"] == 18

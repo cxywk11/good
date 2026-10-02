@@ -344,11 +344,11 @@ def test_current_single_target_state_keeps_time_license_and_gates_separate():
     assert audit["source_checks"] == {"transport":"VALID", "schema":"VALID", "identity":"VALID",
                                      "time":"UNVERIFIED", "license_use":"UNVERIFIED", "replay":"BLOCKED"}
     assert audit["replay_available_at"] is audit["availability_basis"] is None
-    assert state["external_quote_count"] == 0 and not state["external_dataset_created"]
-    assert state["gates"] == {"A":"PASS", "B":"BLOCKED", "C":"BLOCKED"}
+    assert audit["external_quote_count"] == 0 and not audit["new_dataset_created"]
+    assert state["gates"] == {"A":"PASS", "B":"PASS", "C":"BLOCKED"}
     assert state["finished_at"] is None and state["result_count"] == 0
     assert state["official_had_quote_count"] == 54 and state["verified_target_count"] == 1
-    assert state["market_model_data_status"] == "NOT_AVAILABLE"
+    assert state["market_model_data_status"] == "AVAILABLE_PARTIAL_CUTOFFS"
     assert state["market_evaluation_status"] == "NOT_EVALUABLE"
     for minutes in CUTOFFS:
         cutoff = audit["cutoffs"][f"T-{minutes}"]
@@ -361,7 +361,7 @@ def test_no_access_qualification_never_promotes_documentation_or_changes_sina():
     state = json.loads(Path("docs/RESEARCH_CURRENT_STATE.json").read_text("utf-8"))
     qualification = state["historical_source_qualification"]
     primary = qualification["primary_source"]
-    assert state["blocker_classification"] == primary["blocker_class"] == "NO_ACCESS"
+    assert primary["blocker_class"] == "NO_ACCESS"  # Frozen previous attempt; current source is OddsPapi.
     assert primary["credential_status"] == "NOT_AVAILABLE" and primary["status"] == "NO_KEY"
     assert not primary["historical_endpoint_called"]
     assert primary["historical_http_status"] is primary["historical_response_sha256"] is None

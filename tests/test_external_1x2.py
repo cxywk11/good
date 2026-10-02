@@ -25,6 +25,7 @@ from jc.research.contracts import (
     ResearchRecordProvenance,
     ResearchSourceInput,
     SportteryVerificationInput,
+    content_hash,
     dataset_content_hash,
     validate_import,
 )
@@ -32,6 +33,7 @@ from jc.research.importer import import_research_dataset
 from jc.research.pilot import assess_intake_gates
 from jc.research.repository import DatasetConflict, load_research_dataset, verified_sporttery_targets
 from jc.research.sina_1x2 import CUTOFFS, inspect_sina_1x2, map_sina_target
+from jc.time import parse_time
 
 KICKOFF = datetime(2024, 6, 1, 12, tzinfo=UTC)
 MATCH = ResearchMatch(
@@ -332,7 +334,7 @@ def test_new_dataset_roundtrip_immutable_and_two_old_versions_unchanged(sessions
 def test_current_single_target_state_keeps_time_license_and_gates_separate():
     state = json.loads(Path("docs/RESEARCH_CURRENT_STATE.json").read_text("utf-8"))
     audit = state["external_qualification"]
-    assert state["current_phase"] == "P4-4D2B.6"
+    assert state["current_phase"] == "P4-4D2B.7"
     assert state["the_odds_api_credential_status"] == "NOT_AVAILABLE"
     assert state["the_odds_api_target_coverage"] == "NOT_TESTED_NO_KEY"
     assert audit["target"] == "2041790" and audit["external_match_id"] == "3867327"
@@ -353,3 +355,39 @@ def test_current_single_target_state_keeps_time_license_and_gates_separate():
         assert cutoff["status"] == "BLOCKED" and cutoff["official_had"] == "AVAILABLE"
         assert cutoff["selected_record"] is cutoff["p_market"] is cutoff["sporttery_external_gap"] is None
         assert cutoff["external_consensus_source_count"] == 0
+
+
+def test_no_access_qualification_never_promotes_documentation_or_changes_sina():
+    state = json.loads(Path("docs/RESEARCH_CURRENT_STATE.json").read_text("utf-8"))
+    qualification = state["historical_source_qualification"]
+    primary = qualification["primary_source"]
+    assert state["blocker_classification"] == primary["blocker_class"] == "NO_ACCESS"
+    assert primary["credential_status"] == "NOT_AVAILABLE" and primary["status"] == "NO_KEY"
+    assert not primary["historical_endpoint_called"]
+    assert primary["historical_http_status"] is primary["historical_response_sha256"] is None
+    assert primary["historical_raw_content_hash"] is primary["external_event_id"] is None
+    assert primary["historical_snapshot_count"] == primary["complete_1x2_count"] == primary["external_quote_count"] == 0
+    assert primary["verification_status"] == "UNVERIFIED"
+    assert primary["target_mapping"] == "UNVERIFIED" and primary["target_coverage"] == "NOT_TESTED_NO_KEY"
+    assert primary["license_use"] == "VERIFIED" and primary["timestamp_semantics_response"] == "UNVERIFIED"
+    assert primary["replay_available_at"] is primary["availability_basis"] is None
+    assert qualification["sina_frozen_qualification_hash"] == content_hash(state["external_qualification"])
+    # Pin the accepted Sina evidence, not just two mutually editable state fields.
+    assert qualification["sina_frozen_qualification_hash"] == "4a2878d1175ff48af2c63d1c7dcba993fcd162533a9167dc8ac177ee5e774ecd"
+    checks = {"transport", "schema", "match_identity", "bookmaker_identity", "one_x_two_mapping",
+              "historical_timestamp", "availability_semantics", "license_use", "replay"}
+    assert set(primary["source_checks"]) == checks
+    for candidate in qualification["candidate_discovery"]:
+        assert set(candidate["source_checks"]) == checks
+        assert candidate["verification_status"] == "UNVERIFIED"
+        assert candidate["replay_available_at"] is candidate["availability_basis"] is None
+    assert not qualification["dataset_created"]
+    assert qualification["new_dataset_version"] is qualification["new_dataset_hash"] is None
+    assert not qualification["raw_artifacts_in_git"] and not qualification["real_provider_fixtures_added"]
+    for minutes in CUTOFFS:
+        cutoff = qualification["cutoffs"][f"T-{minutes}"]
+        assert parse_time(cutoff["cutoff"]) == parse_time("2026-09-30T10:30:00Z") - timedelta(minutes=minutes)
+        assert cutoff["status"] == "BLOCKED" and cutoff["reason"] == "NO_ACCESS"
+        assert not cutoff["request_executed"]
+        assert cutoff["selected_snapshot_timestamp"] is cutoff["p_market"] is cutoff["sporttery_external_gap"] is None
+        assert cutoff["external_consensus_source_count"] == 0 and cutoff["official_had"] == "AVAILABLE"

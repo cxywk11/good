@@ -8,13 +8,20 @@ import argparse
 import json
 import os
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
 from dotenv import dotenv_values
 
-from jc.analysis.research_replay import NotReplayable, ReplayCutoffSpec, build_research_feature
+from jc.analysis.market import build_market_data
+from jc.analysis.research_replay import (
+    NotReplayable,
+    ReplayCutoffSpec,
+    ResearchOddsQuote,
+    build_research_feature,
+)
 from jc.research.contracts import (
     ResearchImport,
     canonical_bytes,
@@ -30,7 +37,7 @@ ODDS_HISTORY = "https://api.the-odds-api.com/v4/historical/sports/soccer_epl/odd
 CUTOFF_MINUTES = (30, 90, 360)
 
 
-def assess_intake_gates(value: ResearchImport) -> dict:
+def assess_intake_gates(value: ResearchImport, *, cutoff_minutes: tuple[int, ...] = CUTOFF_MINUTES) -> dict:
     """Independent A/B evidence gates; never attest C/D/E/F from their success.
 
     Input must already pass unchanged D2A evidence validation. This helper does
@@ -43,25 +50,54 @@ def assess_intake_gates(value: ResearchImport) -> dict:
         name
         for name, source in sources.items()
         if source.source.source_type == "EXTERNAL_ODDS_HISTORY" and source.verification_status == "VERIFIED"
+        and name != "sporttery" and source.provider_name != "sporttery"
     }
     coverage = {}
-    for minutes in CUTOFF_MINUTES:
+    markets: dict = {}
+    matches = {match.research_match_id: match for match in value.dataset.matches}
+    for minutes in cutoff_minutes:
         covered = set()
-        for target in targets:
+        markets[str(minutes)] = {}
+        for target in sorted(targets):
+            cutoff = ReplayCutoffSpec(minutes).at(matches[target].kickoff_at)
+            # Select whole external snapshots BEFORE frozen v1 selects per-series
+            # quotes. Otherwise three unrelated timestamps can look complete.
+            snapshots: dict[tuple, list[ResearchOddsQuote]] = defaultdict(list)
+            for quote in value.dataset.odds:
+                if (quote.research_match_id == target and quote.provider in external
+                        and quote.market_type == "1X2" and quote.line is None
+                        and quote.replay_available_at is not None
+                        and all(stamp is None or stamp <= cutoff < matches[target].kickoff_at
+                                for stamp in (quote.replay_available_at, quote.published_at, quote.effective_at))):
+                    snapshots[(quote.provider, quote.bookmaker, quote.replay_available_at,
+                               quote.effective_at or quote.published_at or quote.replay_available_at)].append(quote)
+            latest: dict[tuple, list[ResearchOddsQuote]] = {}
+            ambiguous = set()
+            for key, quotes in sorted(snapshots.items()):
+                bookmaker = key[:2]
+                if len({q.selection for q in quotes}) != len(quotes):
+                    ambiguous.add(bookmaker)  # Never arbitrarily pick a duplicate/conflicting observation.
+                if (len(quotes) == 3 and {q.selection for q in quotes} == {"HOME", "DRAW", "AWAY"}
+                        and len({(q.availability_basis, q.published_at, q.effective_at) for q in quotes}) == 1):
+                    latest[bookmaker] = quotes
+            odds = tuple(q for q in value.dataset.odds if q.provider == "sporttery") + tuple(
+                q for bookmaker, quotes in latest.items() if bookmaker not in ambiguous for q in quotes
+            )
             try:
-                feature = build_research_feature(value.dataset, target, ReplayCutoffSpec(minutes))
+                feature = build_research_feature(replace(value.dataset, odds=odds), target,
+                                                 ReplayCutoffSpec(minutes))
             except NotReplayable:
                 continue
-            groups = defaultdict(set)
-            for quote in feature.market["quotes"]:
-                if quote["provider"] in external and quote["market_type"] == "1X2" and quote["line"] is None:
-                    groups[(quote["provider"], quote["bookmaker"])].add(quote["selection"])
-            if any(selections == {"HOME", "DRAW", "AWAY"} for selections in groups.values()):
+            market = build_market_data(feature)
+            markets[str(minutes)][target] = market
+            consensus = market["external_consensus"]
+            if consensus["source_count"] >= 1 and consensus["p_market"] is not None:
                 covered.add(target)
         coverage[str(minutes)] = len(covered)
     return {
         "verified_target_count": len(targets),
         "cutoff_coverage": coverage,
+        "cutoff_markets": markets,
         "gates": {
             "A": "PASS" if targets else "BLOCKED",
             "B": "PASS" if any(coverage.values()) else "BLOCKED",
